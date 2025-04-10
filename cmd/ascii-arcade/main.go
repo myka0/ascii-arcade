@@ -52,10 +52,14 @@ var (
 )
 
 type model struct {
-  game        int
-  windowHeight int
-	windowWidth  int
-  activeModel tea.Model
+  game          int
+  windowHeight  int
+	windowWidth   int
+  activeModel   tea.Model
+}
+
+type Saver interface {
+  SaveToFile() error
 }
 
 func initialModel() model {
@@ -77,18 +81,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg.String() {
     // Quit
     case "ctrl+c":
+      m.handleSaveGame()
       return m, tea.Quit
 
     // Move to prev game
     case "esc":
       if m.game > 0 {
+        m.handleSaveGame()
         m.game--
         return m.handleSwitchModel()
       }
 
     // Move to next game
     case "ctrl+]":
-      if m.game < 3 {
+      if m.game < 2 {
+        m.handleSaveGame()
         m.game++
         return m.handleSwitchModel()
       }
@@ -104,12 +111,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) handleResize(msg tea.WindowSizeMsg) tea.Cmd {
-	m.windowHeight = msg.Height
-	m.windowWidth = msg.Width
-	return nil
-}
-
 func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
   switch m.game {
     case 0:
@@ -123,6 +124,20 @@ func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
       return m, m.activeModel.Init()
     default:
       return m, nil
+  }
+}
+
+func (m *model) handleResize(msg tea.WindowSizeMsg) tea.Cmd {
+	m.windowHeight = msg.Height
+	m.windowWidth = msg.Width
+	return nil
+}
+
+func (m model) handleSaveGame() {
+  if saver, ok := m.activeModel.(Saver); ok {
+    if err := saver.SaveToFile(); err != nil {
+      fmt.Println("Auto-save failed:", err)
+    }
   }
 }
 
