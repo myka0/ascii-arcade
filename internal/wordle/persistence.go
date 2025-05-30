@@ -1,24 +1,24 @@
 package wordle
 
 import (
-  "os"
-  "fmt"
-  "encoding/json"
+	"encoding/json"
+	"fmt"
+	"os"
 )
 
 const filename = "data/wordle/games.json"
 
 type saveData struct {
-  Answer    string          `json:"answer"`
-	Guesses   [6]string       `json:"guesses"`
-	CursorX   int             `json:"cursor_x"`
-	CursorY   int             `json:"cursor_y"`
-  Keyboard  map[string]int  `json:"keyboard_state"`
+	Answer   string         `json:"answer"`
+	Guesses  [6]string      `json:"guesses"`
+	CursorX  int            `json:"cursor_x"`
+	CursorY  int            `json:"cursor_y"`
+	Keyboard map[string]int `json:"keyboard_state"`
 }
 
 func (m *WordleModel) SaveToFile() error {
 	// Read existing data
-  savedGames := make(map[string]saveData)
+	savedGames := make(map[string]saveData)
 	fileData, err := os.ReadFile(filename)
 	if err == nil {
 		if err := json.Unmarshal(fileData, &savedGames); err != nil {
@@ -28,14 +28,14 @@ func (m *WordleModel) SaveToFile() error {
 		return fmt.Errorf("error reading file: %v", err)
 	}
 
-  // Convert byte slices to strings for JSON serialization
+	// Convert byte slices to strings for JSON serialization
 	var guesses [6]string
 	for i, g := range m.guesses {
 		guesses[i] = string(g[:])
 	}
 
-  // Convert byte keys to string keys for JSON serialization
-  keyboard := make(map[string]int)
+	// Convert byte keys to string keys for JSON serialization
+	keyboard := make(map[string]int)
 	for k, v := range m.keyboard {
 		keyboard[string(k)] = v
 	}
@@ -46,7 +46,7 @@ func (m *WordleModel) SaveToFile() error {
 		Guesses:  guesses,
 		CursorX:  m.cursorX,
 		CursorY:  m.cursorY,
-    Keyboard: keyboard,
+		Keyboard: keyboard,
 	}
 
 	// Write updated data back to file
@@ -59,7 +59,7 @@ func (m *WordleModel) SaveToFile() error {
 }
 
 func LoadFromFile() (WordleModel, error) {
-  // Read data
+	// Read data
 	fileContent, err := os.ReadFile(filename)
 	if err != nil {
 		return WordleModel{}, fmt.Errorf("error reading file: %w", err)
@@ -76,18 +76,18 @@ func LoadFromFile() (WordleModel, error) {
 	}
 
 	// Get most recent entry
-	latestDate := dates[len(data) - 1]
+	latestDate := dates[len(data)-1]
 	entry := data[latestDate]
 
 	// Convert to WordleModel
-	model := WordleModel {
+	model := WordleModel{
 		date:     latestDate,
-    answer:   [5]byte{},
-    guesses:  [6][5]byte{},
+		answer:   [5]byte{},
+		guesses:  [6][5]byte{},
 		cursorX:  entry.CursorX,
 		cursorY:  entry.CursorY,
-    keyboard: make(map[byte]int, len(entry.Keyboard)),
-    message:  "",
+		keyboard: make(map[byte]int, len(entry.Keyboard)),
+		message:  "",
 	}
 
 	// Convert string data to byte arrays for answer and guesses
@@ -96,10 +96,10 @@ func LoadFromFile() (WordleModel, error) {
 		copy(model.guesses[i][:], guessStr)
 	}
 
-  // Populate keyboard
-  for key, value := range entry.Keyboard {
-    model.keyboard[key[0]] = value
-  }
+	// Populate keyboard
+	for key, value := range entry.Keyboard {
+		model.keyboard[key[0]] = value
+	}
 
 	return model, nil
 }
