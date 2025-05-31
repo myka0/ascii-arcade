@@ -6,6 +6,7 @@ import (
 	"unicode"
 )
 
+// Possible states for each key on the keyboard.
 const (
 	keyUntried = 0
 	keyAbsent  = 1
@@ -13,6 +14,7 @@ const (
 	keyCorrect = 3
 )
 
+// WordleModel represents the state of a Wordle game.
 type WordleModel struct {
 	date     string
 	answer   [5]byte
@@ -23,6 +25,8 @@ type WordleModel struct {
 	message  string
 }
 
+// InitWordleModel creates and initializes a new wordle model.
+// It loads puzzle data from file and sets up the initial game state.
 func InitWordleModel() *WordleModel {
 	m, err := LoadFromFile()
 	if err != nil {
@@ -32,10 +36,12 @@ func InitWordleModel() *WordleModel {
 	return &m
 }
 
+// Init implements the Bubble Tea interface for initialization.
 func (m WordleModel) Init() tea.Cmd {
 	return nil
 }
 
+// Update handles keypress events and updates the model state accordingly.
 func (m *WordleModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -57,6 +63,7 @@ func (m *WordleModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// handleReset resets the game board and keyboard to initial state.
 func (m *WordleModel) handleReset() {
 	m.cursorX = 0
 	m.cursorY = 0
@@ -74,6 +81,7 @@ func (m *WordleModel) handleReset() {
 	m.SaveToFile()
 }
 
+// handleDelete removes the last entered letter in the current guess.
 func (m *WordleModel) handleDelete() {
 	// Only delete if the cursor is not at the beginning of the row
 	if m.cursorX > 0 {
@@ -83,6 +91,7 @@ func (m *WordleModel) handleDelete() {
 	}
 }
 
+// handleSubmit validates and processes the current guess.
 func (m *WordleModel) handleSubmit() {
 	// Ensure the guess is 5 letters
 	if m.cursorX < 5 {
@@ -120,6 +129,7 @@ func (m *WordleModel) handleSubmit() {
 	}
 }
 
+// handleInput processes a letter key input.
 func (m *WordleModel) handleInput(msg tea.KeyMsg) {
 	// Ensure the input is a single character and that we are within bounds
 	if len(msg.String()) != 1 || m.cursorX >= 5 || m.cursorY >= 6 {
@@ -140,6 +150,7 @@ func (m *WordleModel) handleInput(msg tea.KeyMsg) {
 	}
 }
 
+// updateKeyStates updates the keyboard based on the most recent guess.
 func (m WordleModel) updateKeyStates() {
 	currentGuess := m.guesses[m.cursorY]
 	for i, char := range currentGuess {

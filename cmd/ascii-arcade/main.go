@@ -51,6 +51,7 @@ var (
 		BorderRight(false)
 )
 
+// model holds global app state.
 type model struct {
 	game         int
 	windowHeight int
@@ -58,10 +59,12 @@ type model struct {
 	activeModel  tea.Model
 }
 
+// Saver defines a game model that can persist state.
 type Saver interface {
 	SaveToFile() error
 }
 
+// Creates the initial model with crossword as default.
 func initialModel() model {
 	m := model{
 		game:        0,
@@ -71,10 +74,12 @@ func initialModel() model {
 	return m
 }
 
+// Init implements the Bubble Tea interface for initialization.
 func (m model) Init() tea.Cmd {
 	return nil
 }
 
+// Update handles keypress events and updates the model state accordingly.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -111,28 +116,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// handleSwitchModel swaps in a new game model based on selected tab.
 func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
 	switch m.game {
 	case 0:
 		m.activeModel = crossword.InitCrosswordModel()
-		return m, m.activeModel.Init()
 	case 1:
 		m.activeModel = wordle.InitWordleModel()
-		return m, m.activeModel.Init()
 	case 2:
 		m.activeModel = connections.InitConnectionsModel()
-		return m, m.activeModel.Init()
-	default:
-		return m, nil
 	}
+	return m, m.activeModel.Init()
 }
 
+// handleSaveGame updates window size on resize.
 func (m *model) handleResize(msg tea.WindowSizeMsg) tea.Cmd {
 	m.windowHeight = msg.Height
 	m.windowWidth = msg.Width
 	return nil
 }
 
+// handleSaveGame saves the current model if it implements Saver.
 func (m model) handleSaveGame() {
 	if saver, ok := m.activeModel.(Saver); ok {
 		if err := saver.SaveToFile(); err != nil {
@@ -141,15 +145,18 @@ func (m model) handleSaveGame() {
 	}
 }
 
+// View renders the full UI centered in the terminal.
 func (m model) View() string {
 	game := m.viewTabBar() + "\n" + m.activeModel.View()
 	return lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, game)
 }
 
+// viewTabBar renders the navigation tab bar with styling.
 func (m model) viewTabBar() string {
 	tabsAsString := []string{"Crossword", "Wordle", "Connections"}
 	tabs := make([]string, len(tabsAsString))
 
+	// Highlight the active tab
 	for i, tabName := range tabsAsString {
 		if m.game == i {
 			tabs[i] = ActiveTab.Render(Text.Render(tabName))
@@ -163,6 +170,7 @@ func (m model) viewTabBar() string {
 	return lipgloss.JoinHorizontal(lipgloss.Bottom, renderedTabs, gap) + "\n"
 }
 
+// Entry point of the application.
 func main() {
 	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {

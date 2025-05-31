@@ -8,6 +8,7 @@ import (
 
 const filename = "data/wordle/games.json"
 
+// saveData represents the structure used to serialize Wordle data to JSON.
 type saveData struct {
 	Answer   string         `json:"answer"`
 	Guesses  [6]string      `json:"guesses"`
@@ -16,6 +17,7 @@ type saveData struct {
 	Keyboard map[string]int `json:"keyboard_state"`
 }
 
+// SaveToFile writes the current game state to a JSON file.
 func (m *WordleModel) SaveToFile() error {
 	// Read existing data
 	savedGames := make(map[string]saveData)
@@ -58,6 +60,7 @@ func (m *WordleModel) SaveToFile() error {
 	return os.WriteFile(filename, jsonData, 0644)
 }
 
+// LoadFromFile loads the most recent game state from the JSON file.
 func LoadFromFile() (WordleModel, error) {
 	// Read data
 	fileContent, err := os.ReadFile(filename)

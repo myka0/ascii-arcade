@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// View renders the entire game UI.
 func (m WordleModel) View() string {
 	// Generate each row of the Wordle grid
 	var rows [6]string
@@ -12,8 +13,8 @@ func (m WordleModel) View() string {
 		rows[y] = m.viewGridRow(y)
 	}
 
+	// Vertically join all rows with center alignment and compose the full view
 	joindedRows := lipgloss.JoinVertical(lipgloss.Center, rows[:]...)
-
 	output := lipgloss.JoinVertical(
 		lipgloss.Center,
 		joindedRows,
@@ -25,6 +26,7 @@ func (m WordleModel) View() string {
 	return FGText.Render(output)
 }
 
+// viewGridRow renders a single row of the Wordle grid based on its position.
 func (m WordleModel) viewGridRow(y int) string {
 	// Initialize keyStates to keyAbsent
 	keyStates := [5]int{1, 1, 1, 1, 1}
@@ -58,6 +60,7 @@ func (m WordleModel) viewGridRow(y int) string {
 	return lipgloss.JoinHorizontal(lipgloss.Bottom, cells[:]...)
 }
 
+// viewKeyboard renders the on screen keyboard with styling.
 func (m WordleModel) viewKeyboard() string {
 	return Border.Render(
 		lipgloss.JoinVertical(
@@ -69,6 +72,7 @@ func (m WordleModel) viewKeyboard() string {
 	)
 }
 
+// viewKeyboardRow renders a row of keys with their appropriate styles.
 func (m WordleModel) viewKeyboardRow(letters []byte) string {
 	keys := make([]string, len(letters))
 
@@ -81,6 +85,7 @@ func (m WordleModel) viewKeyboardRow(letters []byte) string {
 	return lipgloss.JoinHorizontal(lipgloss.Bottom, keys[:]...)
 }
 
+// styleCell returns a style object based on the key state.
 func (m WordleModel) styleCell(keyStyle int) lipgloss.Style {
 	switch keyStyle {
 	case keyAbsent:
@@ -94,6 +99,7 @@ func (m WordleModel) styleCell(keyStyle int) lipgloss.Style {
 	}
 }
 
+// findIndex searches for a character in a 5 letter word slice and returns its index or -1 if not found
 func findIndex(word [5]byte, char byte) int {
 	for i, c := range word {
 		if c == char {

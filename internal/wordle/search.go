@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// isValid checks whether a 5 letter word exists in the valid word list.
 func isValid(target [5]byte) (bool, error) {
 	// Open the file containing the word list
 	file, err := os.Open("data/wordle/valid-words.txt")
@@ -45,6 +46,7 @@ func isValid(target [5]byte) (bool, error) {
 	return false, nil
 }
 
+// readWord reads a 5 letter word from a specific line in the word list file.
 func readWord(file *os.File, line int) ([]byte, error) {
 	// Calculate the byte offset for the specified line in the file
 	offset := int64(line-1) * 6 // 6 bytes per word (5 letters + newline)
