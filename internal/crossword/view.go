@@ -1,4 +1,3 @@
-// Package crossword implements a crossword puzzle game.
 package crossword
 
 import (
@@ -70,7 +69,7 @@ func (m CrosswordModel) viewCluesBox() string {
 }
 
 // viewClues renders a set of clues into the provided slice.
-// It places the current clue in the middle and surrounding clues above/below.
+// It places the current clue in the middle and surrounding clues above and below.
 func viewClues(clues, viewClues []string, isSolved []bool, clueStartIdx int, isAcross bool) {
 	// Select the appropriate style based on clue direction
 	currentClueStyle := AcrossCell
@@ -116,7 +115,7 @@ func viewSurroundingClues(clues []string, isSolved []bool, clueStartIdx, offset,
 	// Add up to 6 clues in the specified direction
 	for i := 1; i+offset <= 6; i++ {
 		// Calculate the index with wrapping
-		wrappedIdx := ((clueStartIdx+(direction*i))+len(clues)) % len(clues)
+		wrappedIdx := ((clueStartIdx + (direction * i)) + len(clues)) % len(clues)
 		clue := clues[wrappedIdx]
 
 		// Choose style based on whether the clue is solved

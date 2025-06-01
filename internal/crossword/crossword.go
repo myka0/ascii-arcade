@@ -203,8 +203,8 @@ func (m *CrosswordModel) handleCheckWord() {
 
 	// Move backward until we hit the start of the word or the grid edge
 	for pos := *m.movementAxis + offset; pos > 0 && m.cellAt(offset) != '.'; {
-    offset--
-    pos = *m.movementAxis + offset
+		offset--
+		pos = *m.movementAxis + offset
 	}
 
 	// If we hit a black cell, move forward one to get to the start of the word
