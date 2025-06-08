@@ -1,101 +1,111 @@
 package crossword
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-const filename = "data/crossword/games.json"
+const filename = "data/crossword/games.db"
 
-// saveData represents the structure used to serialize crossword puzzle data to JSON.
-type saveData struct {
-	Across []string   `json:"across"`
-	Down   []string   `json:"down"`
-	Answer [15]string `json:"answer"`
-	Grid   [15]string `json:"grid"`
+// GetLatestDate returns the date of the most recent crossword puzzle state.
+func GetLatestDate() (string, error) {
+	// Open the database
+	db, err := sql.Open("sqlite3", filename)
+	if err != nil {
+		return "", fmt.Errorf("error opening database: %v", err)
+	}
+	defer db.Close()
+
+	// Get and return the latest date
+	var date string
+	err = db.QueryRow(`SELECT date FROM crosswords ORDER BY date DESC LIMIT 1`).Scan(&date)
+	return date, err
 }
 
-// SaveToFile persists the current crossword puzzle state to a JSON file.
+// SaveToFile persists the current crossword puzzle state to a SQLite database.
 func (m *CrosswordModel) SaveToFile() error {
-	// Read existing data from the file
-	savedGames := make(map[string]saveData)
-	fileData, err := os.ReadFile(filename)
-	if err == nil {
-		if err := json.Unmarshal(fileData, &savedGames); err != nil {
-			return fmt.Errorf("error parsing existing data: %v", err)
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("error reading file: %v", err)
+	// Open the database
+	db, err := sql.Open("sqlite3", filename)
+	if err != nil {
+		return fmt.Errorf("error opening database: %v", err)
+	}
+	defer db.Close()
+
+	// Create table if it doesn't exist
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS crosswords (
+			date TEXT PRIMARY KEY,
+			across TEXT,
+			down TEXT,
+			answer TEXT,
+			grid TEXT
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("error creating table: %v", err)
 	}
 
-	// Convert byte arrays to strings for JSON serialization
-	var answer [15]string
-	var grid [15]string
+	// Convert byte slices to strings for JSON serialization
+	var answer, grid [15]string
 	for i := range 15 {
 		answer[i] = string(m.answer[i][:])
 		grid[i] = string(m.grid[i][:])
 	}
 
-	// Create or update entry for current date
-	savedGames[m.date] = saveData{
-		Across: m.acrossClues,
-		Down:   m.downClues,
-		Answer: answer,
-		Grid:   grid,
-	}
+	// Convert slices to JSON
+	acrossJSON, _ := json.Marshal(m.acrossClues)
+	downJSON, _ := json.Marshal(m.downClues)
+	answerJSON, _ := json.Marshal(answer)
+	gridJSON, _ := json.Marshal(grid)
 
-	// Write updated data back to file
-	jsonData, err := json.MarshalIndent(savedGames, "", "  ")
-	if err != nil {
-		return fmt.Errorf("error marshaling data: %v", err)
-	}
+	// Insert the data into the database
+	_, err = db.Exec(`
+		INSERT OR REPLACE INTO crosswords (date, across, down, answer, grid)
+		VALUES (?, ?, ?, ?, ?)
+	`, m.date, acrossJSON, downJSON, answerJSON, gridJSON)
 
-	return os.WriteFile(filename, jsonData, 0644)
+	return err
 }
 
-// LoadFromFile loads the most recent crossword puzzle state from the saved JSON file.
-func LoadFromFile() (CrosswordModel, error) {
+// LoadFromFile loads a crossword puzzle state from the SQLite database.
+func LoadFromFile(date string) (CrosswordModel, error) {
 	model := CrosswordModel{}
 
-	// Initialize the grid with empty spaces
-	for i := range model.grid {
-		model.grid[i] = [15]byte{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-	}
-
-	// Read the saved game data from file
-	fileContent, err := os.ReadFile(filename)
+	// Open the database
+	db, err := sql.Open("sqlite3", filename)
 	if err != nil {
-		return model, fmt.Errorf("error reading file: %w", err)
+		return model, fmt.Errorf("error opening database: %v", err)
+	}
+	defer db.Close()
+
+	// Get the saved game data from the database
+	row := db.QueryRow(`SELECT across, down, answer, grid FROM crosswords WHERE date = ?`, date)
+	var acrossJSON, downJSON, answerJSON, gridJSON []byte
+	if err := row.Scan(&acrossJSON, &downJSON, &answerJSON, &gridJSON); err != nil {
+		return model, err
 	}
 
-	// Parse the JSON data
-	var data map[string]saveData
-	if err := json.Unmarshal(fileContent, &data); err != nil {
-		return model, fmt.Errorf("error parsing JSON: %w", err)
-	}
-
-	// Extract dates from the saved games and get the most recent entry
-	dates := make([]string, 0, len(data))
-	for date := range data {
-		dates = append(dates, date)
-	}
-	entry := data[dates[0]]
+	// Convert JSON to slices
+	var across, down []string
+	var answer, grid [15]string
+	json.Unmarshal(acrossJSON, &across)
+	json.Unmarshal(downJSON, &down)
+	json.Unmarshal(answerJSON, &answer)
+	json.Unmarshal(gridJSON, &grid)
 
 	// Set up the model with data from the saved game
-	model.date = dates[0]
-	model.acrossClues = entry.Across
-	model.downClues = entry.Down
+	model.date = date
+	model.acrossClues = across
+	model.downClues = down
 	model.isAcross = true
 	model.message = ""
 
 	// Convert string data back to byte arrays for the model
-	for i, row := range entry.Answer {
-		copy(model.answer[i][:], row)
-	}
-
-	for i, row := range entry.Grid {
-		copy(model.grid[i][:], row)
+	for i := range 15 {
+		copy(model.answer[i][:], answer[i])
+		copy(model.grid[i][:], grid[i])
 	}
 
 	// Initialize grid numbers, clue indices, and solved status

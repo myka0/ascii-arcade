@@ -1,9 +1,9 @@
 package crossword
 
 import (
-	"unicode"
-
+	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
+	"unicode"
 )
 
 // Position represents a 2D coordinate in the crossword grid.
@@ -44,9 +44,14 @@ type CrosswordModel struct {
 // InitCrosswordModel creates and initializes a new crossword model.
 // It loads puzzle data from file and sets up the initial game state.
 func InitCrosswordModel() *CrosswordModel {
-	m, err := LoadFromFile()
+	date, err := GetLatestDate()
 	if err != nil {
-		tea.Println(err.Error())
+		fmt.Println("Failed to get latest date:", err)
+	}
+
+	m, err := LoadFromFile(date)
+	if err != nil {
+		fmt.Println("Failed to load crossword:", err)
 	}
 
 	// Set initial movement direction
