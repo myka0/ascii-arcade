@@ -64,11 +64,11 @@ type Saver interface {
 	SaveToFile() error
 }
 
-// Creates the initial model with crossword as default.
+// Creates the initial model with connections as default.
 func initialModel() model {
 	m := model{
-		game:        0,
-		activeModel: crossword.InitCrosswordModel(),
+		game:        2,
+		activeModel: connections.InitConnectionsModel(),
 	}
 
 	return m
