@@ -1,33 +1,51 @@
 package wordle
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-const filename = "data/wordle/games.json"
+const filename = "data/wordle/games.db"
 
-// saveData represents the structure used to serialize Wordle data to JSON.
-type saveData struct {
-	Answer   string         `json:"answer"`
-	Guesses  [6]string      `json:"guesses"`
-	CursorX  int            `json:"cursor_x"`
-	CursorY  int            `json:"cursor_y"`
-	Keyboard map[string]int `json:"keyboard_state"`
+// GetLatestDate returns the date of the most recent Wordle game state.
+func GetLatestDate() (string, error) {
+	// Open the database
+	db, err := sql.Open("sqlite3", filename)
+	if err != nil {
+		return "", fmt.Errorf("error opening database: %v", err)
+	}
+	defer db.Close()
+
+	// Get and return the latest date
+	var date string
+	err = db.QueryRow(`SELECT date FROM wordle ORDER BY date DESC LIMIT 1`).Scan(&date)
+	return date, err
 }
 
-// SaveToFile writes the current game state to a JSON file.
+// SaveToFile writes the current game state to a SQLite database.
 func (m *WordleModel) SaveToFile() error {
-	// Read existing data
-	savedGames := make(map[string]saveData)
-	fileData, err := os.ReadFile(filename)
-	if err == nil {
-		if err := json.Unmarshal(fileData, &savedGames); err != nil {
-			return fmt.Errorf("error parsing existing data: %v", err)
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("error reading file: %v", err)
+	// Open the database
+	db, err := sql.Open("sqlite3", filename)
+	if err != nil {
+		return fmt.Errorf("error opening database: %v", err)
+	}
+	defer db.Close()
+
+	// Create table if it doesn't exist
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS wordle (
+			date TEXT PRIMARY KEY,
+			answer TEXT,
+			guesses TEXT,
+			cursor_x INTEGER,
+			cursor_y INTEGER,
+			keyboard TEXT
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("error creating table: %v", err)
 	}
 
 	// Convert byte slices to strings for JSON serialization
@@ -42,66 +60,60 @@ func (m *WordleModel) SaveToFile() error {
 		keyboard[string(k)] = v
 	}
 
-	// Update or create entry for current date
-	savedGames[m.date] = saveData{
-		Answer:   string(m.answer[:]),
-		Guesses:  guesses,
-		CursorX:  m.cursorX,
-		CursorY:  m.cursorY,
-		Keyboard: keyboard,
-	}
+	// Convert slices to JSON
+	guessesJSON, _ := json.Marshal(guesses)
+	keyboardJSON, _ := json.Marshal(keyboard)
 
-	// Write updated data back to file
-	jsonData, err := json.MarshalIndent(savedGames, "", "  ")
-	if err != nil {
-		return fmt.Errorf("error marshaling data: %v", err)
-	}
+	// Insert the data into the database
+	_, err = db.Exec(`
+		INSERT OR REPLACE INTO wordle (date, answer, guesses, cursor_x, cursor_y, keyboard)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, m.date, string(m.answer[:]), guessesJSON, m.cursorX, m.cursorY, keyboardJSON)
 
-	return os.WriteFile(filename, jsonData, 0644)
+	return err
 }
 
-// LoadFromFile loads the most recent game state from the JSON file.
-func LoadFromFile() (WordleModel, error) {
-	// Read data
-	fileContent, err := os.ReadFile(filename)
-	if err != nil {
-		return WordleModel{}, fmt.Errorf("error reading file: %w", err)
-	}
-	var data map[string]saveData
-	if err := json.Unmarshal(fileContent, &data); err != nil {
-		return WordleModel{}, fmt.Errorf("error parsing JSON: %w", err)
-	}
-
-	// Extract dates
-	dates := make([]string, 0, len(data))
-	for date := range data {
-		dates = append(dates, date)
-	}
-
-	// Get most recent entry
-	latestDate := dates[len(data)-1]
-	entry := data[latestDate]
-
-	// Convert to WordleModel
+// LoadFromFile loads a wordle game state from the SQLite database.
+func LoadFromFile(date string) (WordleModel, error) {
 	model := WordleModel{
-		date:     latestDate,
+		date:     date,
 		answer:   [5]byte{},
 		guesses:  [6][5]byte{},
-		cursorX:  entry.CursorX,
-		cursorY:  entry.CursorY,
-		keyboard: make(map[byte]int, len(entry.Keyboard)),
+		cursorX:  0,
+		cursorY:  0,
+		keyboard: make(map[byte]int, 26),
 		message:  "",
 	}
 
-	// Convert string data to byte arrays for answer and guesses
-	copy(model.answer[:], entry.Answer)
-	for i, guessStr := range entry.Guesses {
-		copy(model.guesses[i][:], guessStr)
+	// Open the database
+	db, err := sql.Open("sqlite3", filename)
+	if err != nil {
+		return WordleModel{}, fmt.Errorf("error opening database: %v", err)
+	}
+	defer db.Close()
+
+	// Get the saved game data from the database
+	row := db.QueryRow(`SELECT answer, guesses, cursor_x, cursor_y, keyboard FROM wordle WHERE date = ?`, date)
+	var answer, guessesJSON, keyboardJSON []byte
+	if err := row.Scan(&answer, &guessesJSON, &model.cursorX, &model.cursorY, &keyboardJSON); err != nil {
+		return WordleModel{}, err
 	}
 
-	// Populate keyboard
-	for key, value := range entry.Keyboard {
-		model.keyboard[key[0]] = value
+	// Load answer into fixed-size byte array
+	copy(model.answer[:], answer)
+
+	// Decode and copy guesses into fixed-size byte arrays
+	var guesses [6]string
+	json.Unmarshal([]byte(guessesJSON), &guesses)
+	for i, guess := range guesses {
+		copy(model.guesses[i][:], guess)
+	}
+
+	// Decode and map keyboard state
+	var keyboard map[string]int
+	json.Unmarshal(keyboardJSON, &keyboard)
+	for k, v := range keyboard {
+		model.keyboard[k[0]] = v
 	}
 
 	return model, nil

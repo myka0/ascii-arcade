@@ -28,9 +28,14 @@ type WordleModel struct {
 // InitWordleModel creates and initializes a new wordle model.
 // It loads puzzle data from file and sets up the initial game state.
 func InitWordleModel() *WordleModel {
-	m, err := LoadFromFile()
+	date, err := GetLatestDate()
 	if err != nil {
-		m.message = err.Error()
+		fmt.Println("Failed to get latest date:", err)
+	}
+
+	m, err := LoadFromFile(date)
+	if err != nil {
+		fmt.Println("Failed to load wordle:", err)
 	}
 
 	return &m
