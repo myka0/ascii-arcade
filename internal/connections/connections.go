@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"fmt"
 	"hash/maphash"
 	"math/rand"
 
@@ -9,14 +10,15 @@ import (
 
 // WordGroup represents a group of words that are connected to each other.
 type WordGroup struct {
-	members    [4]string
-	clue       string
-	color      int
-	isRevealed bool
+	Members    [4]string `json:"members"`
+	Clue       string    `json:"clue"`
+	Color      int       `json:"color"`
+	IsRevealed bool      `json:"isRevealed"`
 }
 
 // ConnectionsModel represents the state of the connections game.
 type ConnectionsModel struct {
+	date              string
 	wordGroups        [4]WordGroup
 	board             [16]string
 	selectedTiles     [4]string
@@ -27,49 +29,20 @@ type ConnectionsModel struct {
 
 // InitConnectionsModel initializes a new connections model.
 func InitConnectionsModel() *ConnectionsModel {
-	// Initialize the word groups
-	// TODO: Load from file
-	wordGroups := [4]WordGroup{
-		{
-			members:    [4]string{"BEAR", "BULL", "DOVE", "HAWK"},
-			clue:       "Animal metaphors in economics",
-			color:      1,
-			isRevealed: false,
-		},
-		{
-			members:    [4]string{"HOLD", "LAST", "STAND", "STAY"},
-			clue:       "Persist",
-			color:      2,
-			isRevealed: false,
-		},
-		{
-			members:    [4]string{"BORN", "EDUCATION", "OCCUPATION", "SPOUSE"},
-			clue:       "Sidebar info on a person’s Wikipedia page",
-			color:      3,
-			isRevealed: false,
-		},
-		{
-			members:    [4]string{"BRED", "CACHE", "DOE", "LOOT"},
-			clue:       "Homophones of slang for money",
-			color:      4,
-			isRevealed: false,
-		},
+	date, err := GetLatestDate()
+	if err != nil {
+		fmt.Println("Failed to get latest date:", err)
 	}
 
-	// Initialize the model
-	m := ConnectionsModel{
-		wordGroups:        wordGroups,
-		board:             [16]string{},
-		selectedTiles:     [4]string{"BEAR", "BULL", "DOVE", "HAWK"},
-		guessHistory:      [][4]string{},
-		mistakesRemaining: 4,
-		message:           "",
+	m, err := LoadFromFile(date)
+	if err != nil {
+		fmt.Println("Failed to load crossword:", err)
 	}
 
 	// Initialize the board
 	board := []string{}
-	for _, wordGroup := range wordGroups {
-		board = append(board, wordGroup.members[:]...)
+	for _, wordGroup := range m.wordGroups {
+		board = append(board, wordGroup.Members[:]...)
 	}
 	copy(m.board[:], board)
 

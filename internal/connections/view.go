@@ -63,4 +63,3 @@ func styleCell(text string, width int, style lipgloss.Style) string {
 
 	return lipgloss.JoinVertical(lipgloss.Left, margin, content, margin)
 }
-
