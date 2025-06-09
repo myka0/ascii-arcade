@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"hash/maphash"
 	"math/rand"
+	"slices"
 
 	tea "github.com/charmbracelet/bubbletea"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // WordGroup represents a group of words that are connected to each other.
@@ -21,7 +23,7 @@ type ConnectionsModel struct {
 	date              string
 	wordGroups        [4]WordGroup
 	board             [16]string
-	selectedTiles     [4]string
+	selectedTiles     []string
 	guessHistory      [][4]string
 	mistakesRemaining int
 	message           string
@@ -56,9 +58,10 @@ func (m ConnectionsModel) Init() tea.Cmd {
 	return nil
 }
 
-// Update handles keypress events and updates the model state accordingly.
+// Update handles keypress and mouse events to update the Connections game state.
 func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	// Handle keyboard input
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -66,20 +69,34 @@ func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+r":
 			m.shuffle()
 		}
-	}
 
-	return m, nil
-}
+	// Handle mouse input
+	case tea.MouseMsg:
+		// Only respond to left clicks and if the game is still active
+		if msg.Action != tea.MouseActionRelease ||
+			msg.Button != tea.MouseButtonLeft ||
+			m.mistakesRemaining == 0 {
+			return m, nil
+		}
 
-// isSelected checks if the specified cell is selected.
-func (m ConnectionsModel) isSelected(word string) bool {
-	for _, selectedWord := range m.selectedTiles {
-		if selectedWord == word {
-			return true
+		// Check if a word was clicked
+		for _, word := range m.board {
+			if zone.Get(word).InBounds(msg) {
+				// If the word is already selected, deselect it
+				if i := slices.Index(m.selectedTiles, word); i != -1 {
+					m.selectedTiles = slices.Delete(m.selectedTiles, i, i+1)
+
+					// Otherwise, add it to the selection
+				} else if len(m.selectedTiles) < 4 {
+					m.selectedTiles = append(m.selectedTiles, word)
+				}
+
+				return m, nil
+			}
 		}
 	}
 
-	return false
+	return m, nil
 }
 
 // shuffle shuffles the board randomly.

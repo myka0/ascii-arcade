@@ -11,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 var (
@@ -148,7 +149,7 @@ func (m model) handleSaveGame() {
 // View renders the full UI centered in the terminal.
 func (m model) View() string {
 	game := m.viewTabBar() + "\n" + m.activeModel.View()
-	return lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, game)
+	return zone.Scan(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, game))
 }
 
 // viewTabBar renders the navigation tab bar with styling.
@@ -172,7 +173,8 @@ func (m model) viewTabBar() string {
 
 // Entry point of the application.
 func main() {
-	p := tea.NewProgram(initialModel())
+	zone.NewGlobal()
+	p := tea.NewProgram(initialModel(), tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

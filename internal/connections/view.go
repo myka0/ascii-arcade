@@ -1,9 +1,11 @@
 package connections
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // View renders the connections game board.
@@ -38,7 +40,7 @@ func (m ConnectionsModel) viewBoardRow(row int) string {
 
 		// Determine cell style based on selection state
 		style := NormalCell
-		if m.isSelected(word) {
+		if slices.Contains(m.selectedTiles, word) {
 			style = SelectedCell
 		}
 
@@ -61,5 +63,5 @@ func styleCell(text string, width int, style lipgloss.Style) string {
 	margin := style.Render(strings.Repeat(" ", width))
 	content := style.Render(strings.Repeat(" ", left) + text + strings.Repeat(" ", right))
 
-	return lipgloss.JoinVertical(lipgloss.Left, margin, content, margin)
+	return zone.Mark(text, lipgloss.JoinVertical(lipgloss.Left, margin, content, margin))
 }
