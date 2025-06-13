@@ -8,27 +8,84 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 )
 
+const (
+	gap       = 2
+	cellWidth = 16
+	clueWidth = cellWidth*4 + gap*3
+)
+
 // View renders the connections game board.
 func (m ConnectionsModel) View() string {
 	// Render the board rows
 	var rows [4]string
 	for i := range 4 {
-		rows[i] = m.viewBoardRow(i)
+		wordGroupIndex := m.getWordGroup(m.board[i*4])
+		if m.wordGroups[wordGroupIndex].IsRevealed {
+			rows[i] = m.viewRevealedRow(wordGroupIndex)
+		} else {
+			rows[i] = m.viewBoardRow(i)
+		}
 	}
 
 	// Combine all elements vertically
 	board := lipgloss.JoinVertical(lipgloss.Center, rows[:]...)
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
+		FGLightText.Render("Create four groups of four!\n"),
 		board,
-		m.message+"\n",
-		"Create four groups of four!",
+		m.viewMistakesRemaining()+"\n",
+		FGLightText.Render(m.message),
 	)
+}
+
+// viewRevealedRow renders a fully revealed group row with color and clue styling.
+func (m ConnectionsModel) viewRevealedRow(row int) string {
+	group := m.wordGroups[row]
+
+	// Determine color based on group color number
+	var color lipgloss.Color
+	switch group.Color {
+	case 1:
+		color = Color1
+	case 2:
+		color = Color2
+	case 3:
+		color = Color3
+	case 4:
+		color = Color4
+	}
+
+	// Pad and join words
+	var words [4]string
+	for i, word := range group.Members {
+		padding := cellWidth - len(word)
+		left := padding / 2
+		right := padding - left
+		words[i] = strings.Repeat(" ", left) + word + strings.Repeat(" ", right)
+	}
+	wordRow := RevealedLine.Background(color).Render(strings.Join(words[:], "  "))
+
+	// Pad and render clue
+	padding := clueWidth - len(group.Clue)
+	left := padding / 2
+	right := padding - left
+	clueRow := RevealedLine.Background(color).Render(
+		strings.Repeat(" ", left) + group.Clue + strings.Repeat(" ", right),
+	)
+
+	// Top and bottom margin
+	margin := RevealedLine.Background(color).Render(strings.Repeat(" ", 70))
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		margin,
+		wordRow,
+		clueRow,
+		margin) + "\n"
 }
 
 // viewBoardRow renders a row of cells in the connections grid.
 func (m ConnectionsModel) viewBoardRow(row int) string {
-	const cellWidth = 16
 	var cells [4]string
 
 	start := row * 4
@@ -50,6 +107,11 @@ func (m ConnectionsModel) viewBoardRow(row int) string {
 
 	// Join all 4 cells horizontally
 	return lipgloss.JoinHorizontal(lipgloss.Bottom, cells[:]...) + "\n"
+}
+
+func (m ConnectionsModel) viewMistakesRemaining() string {
+	mistakes := MistakeCell.Render(strings.Repeat("● ", m.mistakesRemaining))
+	return FGLightText.Render("Mistakes Remaining: ") + mistakes
 }
 
 // styleCell centers the text in the specified cell and styles it.

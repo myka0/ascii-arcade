@@ -40,7 +40,8 @@ func (m *ConnectionsModel) SaveToFile() error {
 			date TEXT PRIMARY KEY,
 			word_groups TEXT,
 			guess_history TEXT,
-			mistakesRemaining INTEGER
+			revealed_word_groups TEXT,
+			mistakes_remaining INTEGER
 		)
 	`)
 	if err != nil {
@@ -50,12 +51,13 @@ func (m *ConnectionsModel) SaveToFile() error {
 	// Convert slices to JSON
 	wordGroupsJSON, _ := json.Marshal(m.wordGroups)
 	guessHistoryJSON, _ := json.Marshal(m.guessHistory)
+	revealedWordGroupsJSON, _ := json.Marshal(m.revealedWordGroups)
 
 	// Insert the data into the database
 	_, err = db.Exec(`
-		INSERT OR REPLACE INTO connections (date, word_groups, guess_history, mistakesRemaining)
-		VALUES (?, ?, ?, ?)
-	`, m.date, wordGroupsJSON, guessHistoryJSON, m.mistakesRemaining)
+		INSERT OR REPLACE INTO connections (date, word_groups, guess_history, revealed_word_groups, mistakes_remaining)
+		VALUES (?, ?, ?, ?, ?)
+	`, m.date, wordGroupsJSON, guessHistoryJSON, revealedWordGroupsJSON, m.mistakesRemaining)
 
 	return err
 }
@@ -72,23 +74,26 @@ func LoadFromFile(date string) (ConnectionsModel, error) {
 	defer db.Close()
 
 	// Get the saved game data from the database
-	row := db.QueryRow(`SELECT word_groups, guess_history, mistakesRemaining FROM connections WHERE date = ?`, date)
-	var wordGroupsJSON, guessHistoryJSON []byte
+	row := db.QueryRow(`SELECT word_groups, guess_history, revealed_word_groups, mistakes_remaining FROM connections WHERE date = ?`, date)
+	var wordGroupsJSON, guessHistoryJSON, revealedWordGroupsJSON []byte
 	var mistakesRemaining int
-	if err := row.Scan(&wordGroupsJSON, &guessHistoryJSON, &mistakesRemaining); err != nil {
+	if err := row.Scan(&wordGroupsJSON, &guessHistoryJSON, &revealedWordGroupsJSON, &mistakesRemaining); err != nil {
 		return model, err
 	}
 
 	// Convert JSON to slices
 	var wordGroups [4]WordGroup
-	var guessHistory [][4]string
+	var guessHistory [][]string
+	var revealedWordGroups [][]string
 	json.Unmarshal(wordGroupsJSON, &wordGroups)
 	json.Unmarshal(guessHistoryJSON, &guessHistory)
+	json.Unmarshal(revealedWordGroupsJSON, &revealedWordGroups)
 
 	// Set up the model with data from the saved game
 	model.date = date
 	model.wordGroups = wordGroups
 	model.guessHistory = guessHistory
+	model.revealedWordGroups = revealedWordGroups
 	model.mistakesRemaining = mistakesRemaining
 
 	return model, nil
