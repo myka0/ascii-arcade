@@ -5,6 +5,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	Padding       = 2
+	ClueWidth     = 32
+	FullClueWidth = ClueWidth + Padding
+)
+
 var (
 	Across    = colors.Purple
 	Down      = colors.Pink
@@ -123,4 +129,31 @@ var (
 	TopOdd = lipgloss.NewStyle().
 		Foreground(Odd).
 		Background(Even)
+
+	// Clue Styles
+	AcrossClue = lipgloss.NewStyle().
+			Width(FullClueWidth).
+			Foreground(DarkText).
+			Background(Across).
+			Padding(0, 1).
+			Bold(true)
+
+	DownClue = lipgloss.NewStyle().
+			Width(FullClueWidth).
+			Foreground(DarkText).
+			Background(Down).
+			Padding(0, 1).
+			Bold(true)
+
+	SolvedClue = lipgloss.NewStyle().
+			Width(FullClueWidth).
+			Foreground(GreyText).
+			Padding(0, 1).
+			Bold(true)
+
+	NormalClue = lipgloss.NewStyle().
+			Width(FullClueWidth).
+			Foreground(LightText).
+			Padding(0, 1).
+			Bold(true)
 )

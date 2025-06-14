@@ -60,10 +60,10 @@ func (m CrosswordModel) viewCluesBox() string {
 	viewClues(m.downClues, clues[:], m.isDownSolved, clueStartIdx, false)
 
 	// Create the header for the clues box
-	acrossStyle := AcrossCell
-	downStyle := DownCell
-	top := acrossStyle.Render("              Across              ") + "   " +
-		downStyle.Render("               Down               ") + "\n"
+	acrossStyle := AcrossClue.Align(lipgloss.Center)
+	downStyle := DownClue.Align(lipgloss.Center)
+	top := acrossStyle.Render("Across") + "   " +
+		downStyle.Render("Down") + "\n"
 
 	return BorderStyle.Render(top + lipgloss.JoinVertical(lipgloss.Center, clues[:]...))
 }
@@ -72,27 +72,26 @@ func (m CrosswordModel) viewCluesBox() string {
 // It places the current clue in the middle and surrounding clues above and below.
 func viewClues(clues, viewClues []string, isSolved []bool, clueStartIdx int, isAcross bool) {
 	// Select the appropriate style based on clue direction
-	currentClueStyle := AcrossCell
+	currentClueStyle := AcrossClue
 	if !isAcross {
-		currentClueStyle = DownCell
+		currentClueStyle = DownClue
 	}
 
 	clue := clues[clueStartIdx]
 	offset := 0
 
 	// Handle long clues by splitting them across two lines
-	if len(clue) > 35 {
-		lastSpaceIndex := strings.LastIndex(clue[:35], " ")
+	if len(clue) > ClueWidth {
+		lastSpaceIndex := strings.LastIndex(clue[:ClueWidth], " ")
 		indent := strings.Index(clue, " ") + 1
 		offset = 1
 
 		// Split the current clue across two lines
-		viewClues[5] += currentClueStyle.Render(fmt.Sprintf("%-34s", clue[:lastSpaceIndex]))
-		viewClues[6] += currentClueStyle.Render(fmt.Sprintf("%-34s", strings.Repeat(" ", indent)+
-			clue[lastSpaceIndex+1:]))
+		viewClues[5] += currentClueStyle.Render(clue[:lastSpaceIndex])
+		viewClues[6] += currentClueStyle.Render(strings.Repeat(" ", indent) + clue[lastSpaceIndex+1:])
 	} else {
 		// Current clue fits on one line
-		viewClues[6] += currentClueStyle.Render(fmt.Sprintf("%-34s", clues[clueStartIdx]))
+		viewClues[6] += currentClueStyle.Render(clues[clueStartIdx])
 	}
 
 	// Add clues that come before the current clue
@@ -115,52 +114,41 @@ func viewSurroundingClues(clues []string, isSolved []bool, clueStartIdx, offset,
 	// Add up to 6 clues in the specified direction
 	for i := 1; i+offset <= 6; i++ {
 		// Calculate the index with wrapping
-		wrappedIdx := ((clueStartIdx + (direction * i)) + len(clues)) % len(clues)
+		wrappedIdx := (clueStartIdx + direction*i + len(clues)) % len(clues)
 		clue := clues[wrappedIdx]
 
 		// Choose style based on whether the clue is solved
-		clueStyle := FGLightText
+		style := NormalClue
 		if isSolved[wrappedIdx] {
-			clueStyle = FGGreyText
+			style = SolvedClue
 		}
 
 		// Handle long clues by splitting them
-		if len(clue) > 35 {
-			lastSpaceIndex := strings.LastIndex(clue[:35], " ")
+		if len(clue) > ClueWidth {
+			splitIdx := strings.LastIndex(clue[:ClueWidth], " ")
 			indent := strings.Index(clue, " ") + 1
 
-			// If we're at the limit, just add the first part and return
+			// If this is the last available line, truncate and exit
 			if i+offset >= 6 {
-				viewClues = append(viewClues, clueStyle.Render(
-					fmt.Sprintf("%-34s", clue[:lastSpaceIndex])),
-				)
+				viewClues = append(viewClues, style.Render(clue[:splitIdx]))
 				return viewClues
 			}
+
+			firstLine := style.Render(clue[:splitIdx])
+			secondLine := style.Render(strings.Repeat(" ", indent) + clue[splitIdx+1:])
 
 			// Handle split clues differently based on direction
 			if direction == -1 {
 				// For clues above, add the continuation line first, then the start
-				viewClues = append(viewClues, clueStyle.Render(
-					fmt.Sprintf("%-34s", strings.Repeat(" ", indent)+clue[lastSpaceIndex+1:])),
-				)
-				viewClues = append(viewClues, clueStyle.Render(
-					fmt.Sprintf("%-34s", clue[:lastSpaceIndex])),
-				)
+				viewClues = append(viewClues, secondLine, firstLine)
 			} else {
 				// For clues below, add the start line first, then the continuation
-				viewClues = append(viewClues, clueStyle.Render(
-					fmt.Sprintf("%-34s", clue[:lastSpaceIndex])),
-				)
-				viewClues = append(viewClues, clueStyle.Render(
-					fmt.Sprintf("%-34s", strings.Repeat(" ", indent)+clue[lastSpaceIndex+1:])),
-				)
+				viewClues = append(viewClues, firstLine, secondLine)
 			}
 			offset++ // Account for the extra line used
 		} else {
 			// Clue fits on one line
-			viewClues = append(viewClues,
-				clueStyle.Render(fmt.Sprintf("%-34s", clue)),
-			)
+			viewClues = append(viewClues, style.Render(clue))
 		}
 	}
 
