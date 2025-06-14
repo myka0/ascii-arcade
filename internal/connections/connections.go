@@ -86,13 +86,30 @@ func (m *ConnectionsModel) handleMouseClick(msg tea.MouseMsg) {
 		return
 	}
 
-	// Check if the game is over
 	if m.mistakesRemaining == 0 {
 		m.message = "Game over"
 		return
+	} else if m.isGameSolved() {
+		m.message = "🎉 Congratulations! You win! 🎉"
+		return
+	} else {
+		m.message = "Create four groups of four!"
 	}
 
-	m.message = ""
+	// Handle button clicks
+	switch {
+	case zone.Get("Shuffle").InBounds(msg):
+		m.handleShuffle()
+		return
+
+	case zone.Get("Deselect All").InBounds(msg):
+		m.selectedTiles = nil
+		return
+
+	case zone.Get("Submit").InBounds(msg):
+		m.handleSubmit()
+		return
+	}
 
 	// Check if a word was clicked
 	for _, word := range m.board {
@@ -173,6 +190,10 @@ func (m *ConnectionsModel) handleSubmit() {
 		m.revealedWordGroups = append(m.revealedWordGroups, m.wordGroups[wordGroup].Members[:])
 		m.selectedTiles = []string{}
 		m.initBoard()
+
+		if m.isGameSolved() {
+			m.message = "🎉 Congratulations! You win! 🎉"
+		}
 		return
 
 	case 3:
@@ -210,7 +231,7 @@ func (m *ConnectionsModel) handleReset() {
 	m.guessHistory = [][]string{}
 	m.revealedWordGroups = [][]string{}
 	m.mistakesRemaining = 4
-	m.message = ""
+	m.message = "Create four groups of four!"
 
 	m.initBoard()
 	m.SaveToFile()
@@ -218,6 +239,7 @@ func (m *ConnectionsModel) handleReset() {
 
 // initBoard initializes the board with the revealed words at the top and the unrevealed words below.
 func (m *ConnectionsModel) initBoard() {
+	m.message = "Create four groups of four!"
 	board := []string{}
 
 	// Initialize the board with revealed words at the top
@@ -245,6 +267,17 @@ func (m *ConnectionsModel) getWordGroup(word string) int {
 	}
 
 	return 0
+}
+
+// isGameSolved returns true if all word groups are revealed.
+func (m *ConnectionsModel) isGameSolved() bool {
+	for _, wordGroup := range m.wordGroups {
+		if !wordGroup.IsRevealed {
+			return false
+		}
+	}
+
+	return true
 }
 
 // stringSlicesEqual returns true if the two slices contain the same elements.
