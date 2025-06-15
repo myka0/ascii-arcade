@@ -5,12 +5,13 @@ import (
 	"ascii-arcade/internal/connections"
 	"ascii-arcade/internal/crossword"
 	"ascii-arcade/internal/wordle"
+
 	"fmt"
 	"os"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 

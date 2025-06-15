@@ -2,7 +2,7 @@ package wordle
 
 import (
 	"fmt"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 // View renders the entire game UI.

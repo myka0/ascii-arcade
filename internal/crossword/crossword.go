@@ -2,8 +2,9 @@ package crossword
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea/v2"
 	"unicode"
+
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 // Position represents a 2D coordinate in the crossword grid.

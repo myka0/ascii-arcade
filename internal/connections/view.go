@@ -1,10 +1,11 @@
 package connections
 
 import (
+	"image/color"
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -37,7 +38,7 @@ func (m ConnectionsModel) viewRevealedRow(row int) string {
 	group := m.wordGroups[row]
 
 	// Determine color based on group color number
-	var color lipgloss.Color
+	var color color.Color
 	switch group.Color {
 	case 1:
 		color = Color1

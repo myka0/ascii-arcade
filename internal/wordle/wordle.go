@@ -2,8 +2,9 @@ package wordle
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea/v2"
 	"unicode"
+
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 // Possible states for each key on the keyboard.

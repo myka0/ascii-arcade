@@ -2,7 +2,7 @@ package connections
 
 import (
 	"ascii-arcade/internal/colors"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 const (
