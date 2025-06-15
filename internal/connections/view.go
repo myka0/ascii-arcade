@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	zone "github.com/lrstanley/bubblezone"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 // View renders the connections game board.

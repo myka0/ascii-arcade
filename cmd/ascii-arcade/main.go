@@ -1,17 +1,17 @@
 package main
 
 import (
-	"crossword/internal/colors"
-	"crossword/internal/connections"
-	"crossword/internal/crossword"
-	"crossword/internal/wordle"
+	"ascii-arcade/internal/colors"
+	"ascii-arcade/internal/connections"
+	"ascii-arcade/internal/crossword"
+	"ascii-arcade/internal/wordle"
 	"fmt"
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
-	zone "github.com/lrstanley/bubblezone"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 var (
@@ -63,6 +63,11 @@ type model struct {
 // Saver defines a game model that can persist state.
 type Saver interface {
 	SaveToFile() error
+}
+
+// ViewModel defines a view model that can render itself.
+type ViewModel interface {
+	View() string
 }
 
 // Creates the initial model with connections as default.
@@ -148,7 +153,7 @@ func (m model) handleSaveGame() {
 
 // View renders the full UI centered in the terminal.
 func (m model) View() string {
-	game := m.viewTabBar() + "\n" + m.activeModel.View()
+	game := m.viewTabBar() + "\n" + m.activeModel.(ViewModel).View()
 	return zone.Scan(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, game))
 }
 

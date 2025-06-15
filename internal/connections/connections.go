@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"slices"
 
-	tea "github.com/charmbracelet/bubbletea"
-	zone "github.com/lrstanley/bubblezone"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 // WordGroup represents a group of words that are connected to each other.
@@ -70,9 +70,12 @@ func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleReset()
 		}
 
-	// Handle mouse input
+		// Handle mouse input
 	case tea.MouseMsg:
-		m.handleMouseClick(msg)
+		switch msg := msg.(type) {
+		case tea.MouseClickMsg:
+			m.handleMouseClick(msg)
+		}
 	}
 
 	return m, nil
@@ -80,9 +83,8 @@ func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleMouseClick handles mouse interactions.
 func (m *ConnectionsModel) handleMouseClick(msg tea.MouseMsg) {
-	// Only respond to left clicks and if the game is still active
-	if msg.Action != tea.MouseActionRelease ||
-		msg.Button != tea.MouseButtonLeft {
+	// Only respond to left clicks
+	if msg.Mouse().Button != tea.MouseLeft {
 		return
 	}
 

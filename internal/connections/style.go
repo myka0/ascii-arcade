@@ -1,7 +1,7 @@
 package connections
 
 import (
-	"crossword/internal/colors"
+	"ascii-arcade/internal/colors"
 	"github.com/charmbracelet/lipgloss"
 )
 

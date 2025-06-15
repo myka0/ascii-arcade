@@ -2,7 +2,7 @@ package wordle
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"unicode"
 )
 
