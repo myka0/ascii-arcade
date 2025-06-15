@@ -70,7 +70,7 @@ func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleReset()
 		}
 
-		// Handle mouse input
+	// Handle mouse input
 	case tea.MouseMsg:
 		switch msg := msg.(type) {
 		case tea.MouseClickMsg:
