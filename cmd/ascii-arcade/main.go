@@ -5,6 +5,7 @@ import (
 	"ascii-arcade/internal/crossword"
 	"ascii-arcade/internal/wordle"
 
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -72,21 +73,29 @@ type model struct {
 }
 
 // Creates the initial model with connections as default.
-func initialModel() model {
-
+func initialModel(startGame string) *model {
 	m := model{}
-
 	m.games = handleSearch("")
-	return m
+
+	// If a start game is specified, initialize it
+	if startGame != "" {
+		m.selectedGame = startGame
+		m.handleSwitchModel()
+	}
+
+	return &m
 }
 
 // Init implements the Bubble Tea interface for initialization.
 func (m model) Init() tea.Cmd {
+	if m.isGameSelected && m.activeModel != nil {
+		return m.activeModel.Init()
+	}
 	return nil
 }
 
 // Update handles keypress events and updates the model state accordingly.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Global key bindings
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -116,7 +125,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleHomeMenuInput handles keypress events for the home menu.
-func (m model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -130,7 +139,8 @@ func (m model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			m.selectedGame = m.games[m.selectedGameIdx]
-			return m.handleSwitchModel()
+			m.handleSwitchModel()
+			return m.handleInitGame()
 
 		case "backspace":
 			if len(m.searchQuery) > 0 {
@@ -161,7 +171,7 @@ func (m model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleSwitchModel swaps in a new game model based on selected tab.
-func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
+func (m *model) handleSwitchModel() tea.Model {
 	switch m.selectedGame {
 	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
@@ -170,10 +180,15 @@ func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
 	case "Connections":
 		m.activeModel = connections.InitConnectionsModel()
 	default:
-		return m, tea.Quit
+		return m
 	}
 
 	m.isGameSelected = true
+	return m
+}
+
+// handleInitGame initializes the game model.
+func (m *model) handleInitGame() (tea.Model, tea.Cmd) {
 	return m, m.activeModel.Init()
 }
 
@@ -185,7 +200,7 @@ func (m *model) handleResize(msg tea.WindowSizeMsg) tea.Cmd {
 }
 
 // handleSaveGame saves the current model if it implements Saver.
-func (m model) handleSaveGame() {
+func (m *model) handleSaveGame() {
 	if saver, ok := m.activeModel.(Saver); ok {
 		if err := saver.SaveToFile(); err != nil {
 			fmt.Println("Auto-save failed:", err)
@@ -219,8 +234,19 @@ func handleSearch(query string) []string {
 
 // Entry point of the application.
 func main() {
+	noMouse := flag.Bool("no-mouse", false, "Run without mouse support")
+	startGame := flag.String("game", "", "Start with a specific game")
+	flag.Parse()
+
 	zone.NewGlobal()
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen(), tea.WithMouseCellMotion())
+
+	var opts []tea.ProgramOption
+	if ! *noMouse {
+		opts = append(opts, tea.WithAltScreen())
+		opts = append(opts, tea.WithMouseCellMotion())
+	}
+
+	p := tea.NewProgram(initialModel(*startGame), opts...)
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
