@@ -20,7 +20,6 @@ func (m WordleModel) View() string {
 		joindedRows,
 		m.viewKeyboard(),
 		"\n"+m.message+"\n",
-		"Type a word and press Enter or press ctrl+c to quit.",
 	)
 
 	return FGText.Render(output)

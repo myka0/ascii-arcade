@@ -1,7 +1,6 @@
 package main
 
 import (
-	"ascii-arcade/internal/colors"
 	"ascii-arcade/internal/connections"
 	"ascii-arcade/internal/crossword"
 	"ascii-arcade/internal/wordle"
@@ -11,54 +10,43 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
-var (
-	Text = lipgloss.NewStyle().Foreground(colors.Light1)
+// GamesList holds the list of games.
+type GamesList struct {
+	Header string
+	Games  []string
+}
 
-	ActiveTabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      " ",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┘",
-		BottomRight: "└",
-	}
-
-	TabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      "─",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┴",
-		BottomRight: "┴",
-	}
-
-	Tab = lipgloss.NewStyle().
-		Border(TabBorder, true).
-		BorderForeground(colors.Blue).
-		Padding(0, 1)
-
-	ActiveTab = Tab.Border(ActiveTabBorder, true)
-
-	TabGap = Tab.
-		BorderTop(false).
-		BorderLeft(false).
-		BorderRight(false)
-)
-
-// model holds global app state.
-type model struct {
-	game         int
-	windowHeight int
-	windowWidth  int
-	activeModel  tea.Model
+var Games = []GamesList{
+	{
+		Header: "Classics",
+		Games: []string{
+			"Tetris",
+			"Snake",
+			"Solitaire",
+			"Minesweeper",
+		},
+	},
+	{
+		Header: "New York Times",
+		Games: []string{
+			"Crossword",
+			"Wordle",
+			"Connections",
+			"Sudoku",
+		},
+	},
+	{
+		Header: "Strategy Games",
+		Games: []string{
+			"Go",
+			"Chess",
+			"Checkers",
+			"Connect Four",
+		},
+	},
 }
 
 // Saver defines a game model that can persist state.
@@ -71,13 +59,24 @@ type ViewModel interface {
 	View() string
 }
 
+// model holds global app state.
+type model struct {
+	windowHeight    int
+	windowWidth     int
+	isGameSelected  bool
+	activeModel     tea.Model
+	selectedGame    string
+	selectedGameIdx int
+	games           []string
+	searchQuery     string
+}
+
 // Creates the initial model with connections as default.
 func initialModel() model {
-	m := model{
-		game:        2,
-		activeModel: connections.InitConnectionsModel(),
-	}
 
+	m := model{}
+
+	m.games = handleSearch("")
 	return m
 }
 
@@ -88,51 +87,93 @@ func (m model) Init() tea.Cmd {
 
 // Update handles keypress events and updates the model state accordingly.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Global key bindings
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		// Quit
 		case "ctrl+c":
 			m.handleSaveGame()
 			return m, tea.Quit
 
-		// Move to prev game
-		case "esc":
-			if m.game > 0 {
-				m.handleSaveGame()
-				m.game--
-				return m.handleSwitchModel()
-			}
-
-		// Move to next game
-		case "ctrl+]":
-			if m.game < 2 {
-				m.handleSaveGame()
-				m.game++
-				return m.handleSwitchModel()
-			}
+		case "ctrl+h":
+			m.isGameSelected = false
+			return m, nil
 		}
 
-	// If the window is resized, store its new dimensions.
+	// If the window is resized, store its new dimensions
 	case tea.WindowSizeMsg:
 		return m, m.handleResize(msg)
 	}
 
-	var cmd tea.Cmd
-	m.activeModel, cmd = m.activeModel.Update(msg)
-	return m, cmd
+	// If the game is selected, pass the keypress to the active model
+	if m.isGameSelected {
+		var cmd tea.Cmd
+		m.activeModel, cmd = m.activeModel.Update(msg)
+		return m, cmd
+	}
+
+	return m.handleHomeMenuInput(msg)
+}
+
+// handleHomeMenuInput handles keypress events for the home menu.
+func (m model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "down":
+			m.selectedGameIdx = (m.selectedGameIdx + 1) % len(m.games)
+			m.selectedGame = m.games[m.selectedGameIdx]
+
+		case "up":
+			m.selectedGameIdx = (m.selectedGameIdx - 1 + len(m.games)) % len(m.games)
+			m.selectedGame = m.games[m.selectedGameIdx]
+
+		case "enter":
+			m.selectedGame = m.games[m.selectedGameIdx]
+			return m.handleSwitchModel()
+
+		case "backspace":
+			if len(m.searchQuery) > 0 {
+				m.searchQuery = m.searchQuery[:len(m.searchQuery)-1]
+				m.games = handleSearch(m.searchQuery)
+			}
+
+		case "esc":
+			m.searchQuery = ""
+			m.games = handleSearch(m.searchQuery)
+
+		// Handle search input
+		default:
+			if len(msg.String()) == 1 && len(m.games) != 0 {
+				m.searchQuery += msg.String()
+				m.games = handleSearch(m.searchQuery)
+
+				if len(m.games) == 0 {
+					m.selectedGameIdx = 0
+				} else if m.selectedGameIdx >= len(m.games) {
+					m.selectedGameIdx = len(m.games) - 1
+				}
+			}
+		}
+	}
+
+	return m, nil
 }
 
 // handleSwitchModel swaps in a new game model based on selected tab.
 func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
-	switch m.game {
-	case 0:
+	switch m.selectedGame {
+	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
-	case 1:
+	case "Wordle":
 		m.activeModel = wordle.InitWordleModel()
-	case 2:
+	case "Connections":
 		m.activeModel = connections.InitConnectionsModel()
+	default:
+		return m, tea.Quit
 	}
+
+	m.isGameSelected = true
 	return m, m.activeModel.Init()
 }
 
@@ -152,29 +193,28 @@ func (m model) handleSaveGame() {
 	}
 }
 
-// View renders the full UI centered in the terminal.
-func (m model) View() string {
-	game := m.viewTabBar() + "\n" + m.activeModel.(ViewModel).View()
-	return zone.Scan(lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, game))
-}
+// handleSearch filters for games that contain the search query.
+func handleSearch(query string) []string {
+	var matches []string
 
-// viewTabBar renders the navigation tab bar with styling.
-func (m model) viewTabBar() string {
-	tabsAsString := []string{"Crossword", "Wordle", "Connections"}
-	tabs := make([]string, len(tabsAsString))
+	// Return all games if query is empty
+	if query == "" {
+		for _, gamesList := range Games {
+			matches = append(matches, gamesList.Games...)
+		}
+		return matches
+	}
 
-	// Highlight the active tab
-	for i, tabName := range tabsAsString {
-		if m.game == i {
-			tabs[i] = ActiveTab.Render(Text.Render(tabName))
-		} else {
-			tabs[i] = Tab.Render(Text.Render(tabName))
+	// Match games whose names start with the query
+	for _, list := range Games {
+		for _, game := range list.Games {
+			if strings.HasPrefix(strings.ToLower(game), strings.ToLower(query)) {
+				matches = append(matches, game)
+			}
 		}
 	}
 
-	renderedTabs := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
-	gap := TabGap.Render(strings.Repeat(" ", max(0, 96-lipgloss.Width(renderedTabs)-2)))
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, renderedTabs, gap) + "\n"
+	return matches
 }
 
 // Entry point of the application.

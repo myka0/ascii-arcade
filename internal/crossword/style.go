@@ -19,8 +19,8 @@ var (
 	Even      = colors.Light1
 	Odd       = colors.Light2
 	DarkText  = colors.Dark
-	LightText = colors.Light1
-	GreyText  = colors.Medium
+	LightText = colors.Light2
+	GreyText  = colors.Medium2
 	Border    = colors.Blue
 
 	FGAcross    = lipgloss.NewStyle().Foreground(Across)

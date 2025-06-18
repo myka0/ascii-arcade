@@ -8,7 +8,7 @@ import (
 var (
 	KeyCorrect = colors.Purple
 	KeyPresent = colors.Pink
-	KeyAbsent  = colors.Medium
+	KeyAbsent  = colors.Medium2
 	Text       = colors.Light2
 
 	FGKeyCorrect = lipgloss.NewStyle().Foreground(KeyCorrect)

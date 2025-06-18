@@ -16,7 +16,6 @@ var (
 	Background = colors.Dark
 	LightText  = colors.Light2
 	DarkText   = colors.Dark
-	GreyText   = colors.Medium
 	Special    = colors.Purple
 
 	Color1 = colors.Orange

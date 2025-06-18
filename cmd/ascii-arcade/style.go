@@ -1,0 +1,59 @@
+package main
+
+import (
+	"ascii-arcade/internal/colors"
+
+	"github.com/charmbracelet/lipgloss/v2"
+)
+
+var (
+	Text = lipgloss.NewStyle().Foreground(colors.Light2)
+
+	// List styles
+	ListStyle = lipgloss.NewStyle().
+			MarginLeft(16)
+
+	ListHeader = lipgloss.NewStyle().
+			Foreground(colors.Dark).
+			Background(colors.Purple).
+			Padding(0, 1).
+			MarginTop(1).
+			Bold(true)
+
+	ListEntry = lipgloss.NewStyle().
+			Foreground(colors.Light2).
+			MarginLeft(2)
+
+	SelectedListEntry = lipgloss.NewStyle().
+				Foreground(colors.Pink)
+
+	// Menu styles
+	MenuStyle = lipgloss.NewStyle().
+			Width(48)
+
+	KeyBindMenu = lipgloss.NewStyle().
+			Width(16)
+
+	// Keybinding styles
+	KeyStyle = lipgloss.NewStyle().
+			Foreground(colors.Medium1)
+
+	KeyActionStyle = lipgloss.NewStyle().
+			Foreground(colors.Medium2)
+
+	Header = lipgloss.NewStyle().Foreground(colors.Purple).Render(`
+         █████╗ ███████╗ ██████╗██╗██╗
+        ██╔══██╗██╔════╝██╔════╝██║██║
+        ███████║███████╗██║     ██║██║
+        ██╔══██║╚════██║██║     ██║██║
+        ██║  ██║███████║╚██████╗██║██║
+        ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝╚═╝
+
+ █████╗ ██████╗  ██████╗ █████╗ ██████╗ ███████╗
+██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝
+███████║██████╔╝██║     ███████║██║  ██║█████╗
+██╔══██║██╔══██╗██║     ██╔══██║██║  ██║██╔══╝
+██║  ██║██║  ██║╚██████╗██║  ██║██████╔╝███████╗
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝`,
+	)
+)
