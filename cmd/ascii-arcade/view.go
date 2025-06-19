@@ -18,12 +18,14 @@ func (m model) View() string {
 	}
 
 	keyBindings := lipgloss.NewStyle().MarginLeft(8).Render(m.viewKeyBindings())
+	message := CenteredText.Render(m.message) + "\n"
 
 	// Render the home menu
 	menu := lipgloss.JoinVertical(
 		lipgloss.Left,
 		Header,
 		m.viewGameList(),
+		message,
 		keyBindings,
 	)
 

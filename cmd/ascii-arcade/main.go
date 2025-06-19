@@ -70,6 +70,7 @@ type model struct {
 	selectedGameIdx int
 	games           []string
 	searchQuery     string
+	message         string
 }
 
 // Creates the initial model with connections as default.
@@ -79,7 +80,7 @@ func initialModel(startGame string) *model {
 
 	// If a start game is specified, initialize it
 	if startGame != "" {
-		m.selectedGame = startGame
+		m.selectedGame = strings.ToUpper(startGame[0:1]) + strings.ToLower(startGame[1:])
 		m.handleSwitchModel()
 	}
 
@@ -130,30 +131,39 @@ func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "down":
+			m.message = ""
 			m.selectedGameIdx = (m.selectedGameIdx + 1) % len(m.games)
 			m.selectedGame = m.games[m.selectedGameIdx]
 
 		case "up":
+			m.message = ""
 			m.selectedGameIdx = (m.selectedGameIdx - 1 + len(m.games)) % len(m.games)
 			m.selectedGame = m.games[m.selectedGameIdx]
 
 		case "enter":
 			m.selectedGame = m.games[m.selectedGameIdx]
 			m.handleSwitchModel()
+			if m.activeModel == nil {
+				m.message = "Selected game not implemented yet."
+				return m, nil
+			}
 			return m.handleInitGame()
 
 		case "backspace":
+			m.message = ""
 			if len(m.searchQuery) > 0 {
 				m.searchQuery = m.searchQuery[:len(m.searchQuery)-1]
 				m.games = handleSearch(m.searchQuery)
 			}
 
 		case "esc":
+			m.message = ""
 			m.searchQuery = ""
 			m.games = handleSearch(m.searchQuery)
 
 		// Handle search input
 		default:
+			m.message = ""
 			if len(msg.String()) == 1 && len(m.games) != 0 {
 				m.searchQuery += msg.String()
 				m.games = handleSearch(m.searchQuery)
@@ -241,7 +251,7 @@ func main() {
 	zone.NewGlobal()
 
 	var opts []tea.ProgramOption
-	if ! *noMouse {
+	if !*noMouse {
 		opts = append(opts, tea.WithAltScreen())
 		opts = append(opts, tea.WithMouseCellMotion())
 	}

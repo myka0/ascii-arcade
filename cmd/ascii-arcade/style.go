@@ -7,7 +7,14 @@ import (
 )
 
 var (
+	MenuWidth        = 48
+	KeyBindMenuWidth = 16
+
 	Text = lipgloss.NewStyle().Foreground(colors.Light2)
+
+	CenteredText = Text.
+			Width(MenuWidth).
+			Align(lipgloss.Center)
 
 	// List styles
 	ListStyle = lipgloss.NewStyle().
@@ -29,10 +36,10 @@ var (
 
 	// Menu styles
 	MenuStyle = lipgloss.NewStyle().
-			Width(48)
+			Width(MenuWidth)
 
 	KeyBindMenu = lipgloss.NewStyle().
-			Width(16)
+			Width(KeyBindMenuWidth)
 
 	// Keybinding styles
 	KeyStyle = lipgloss.NewStyle().
