@@ -3,6 +3,7 @@ package main
 import (
 	"ascii-arcade/internal/connections"
 	"ascii-arcade/internal/crossword"
+	"ascii-arcade/internal/solitaire"
 	"ascii-arcade/internal/wordle"
 
 	"flag"
@@ -183,6 +184,8 @@ func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 // handleSwitchModel swaps in a new game model based on selected tab.
 func (m *model) handleSwitchModel() tea.Model {
 	switch m.selectedGame {
+	case "Solitaire":
+		m.activeModel = solitaire.InitSolitaireModel()
 	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
 	case "Wordle":

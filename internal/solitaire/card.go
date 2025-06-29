@@ -6,14 +6,14 @@ import (
 
 var (
 	values = []string{"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"}
-	suits  = []string{"♠", "♣", "♦", "♥"}
+	suits  = []string{"♠", "♣", "♥", "♦"}
 )
 
 const (
 	Spade = iota
-	Diamond
-	Heart
 	Club
+	Heart
+	Diamond
 )
 
 const (
@@ -41,18 +41,23 @@ type Card struct {
 }
 
 // NewCard creates a new card with a specified suit and rank.
-func NewCard(suit, rank int) Card {
-	return Card{
+func NewCard(suit, rank int) *Card {
+	return &Card{
 		Suit:       suit,
 		Rank:       rank,
-		FaceDown:   false,
+		FaceDown:   true,
 		IsSelected: false,
 	}
 }
 
-// Flip toggles the FaceDown status of the card
-func (c *Card) Flip() {
-	c.FaceDown = !c.FaceDown
+// FlipFaceUp flips the card face up.
+func (c *Card) FlipFaceUp() {
+	c.FaceDown = false
+}
+
+// FlipFaceDown flips the card face down.
+func (c *Card) FlipFaceDown() {
+	c.FaceDown = true
 }
 
 // View returns a string representation of the card.
@@ -93,6 +98,11 @@ func ViewEmptyCard() string {
 	}, "\n")
 }
 
+// ViewCardSpacer renders an empty card width spacer.
+func ViewCardSpacer() string {
+	return "       "
+}
+
 // ViewTop renders only the top line of a card for expanded decks.
 func (c Card) ViewTop() string {
 	rank := values[c.Rank]
@@ -131,7 +141,7 @@ func (c Card) ViewCard() string {
 
 	// Choose style based on suit
 	suitStyle := FGWhite
-	if suit == 2 || suit == 3 { // ♥ ♦
+	if suit >= Heart {
 		suitStyle = FGRed
 	}
 

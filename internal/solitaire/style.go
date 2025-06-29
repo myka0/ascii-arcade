@@ -16,4 +16,10 @@ var (
 	FGWhite    = lipgloss.NewStyle().Foreground(White)
 	FGEmpty    = lipgloss.NewStyle().Foreground(Empty)
 	FGSelected = lipgloss.NewStyle().Foreground(Selected)
+
+	TableauColumnHint = lipgloss.NewStyle().
+				Align(lipgloss.Center).
+				Foreground(Empty).
+				PaddingTop(1).
+				Width(7)
 )
