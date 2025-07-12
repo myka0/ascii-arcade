@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ascii-arcade/internal/chess"
 	"ascii-arcade/internal/connections"
 	"ascii-arcade/internal/crossword"
 	"ascii-arcade/internal/solitaire"
@@ -192,6 +193,8 @@ func (m *model) handleSwitchModel() tea.Model {
 		m.activeModel = wordle.InitWordleModel()
 	case "Connections":
 		m.activeModel = connections.InitConnectionsModel()
+	case "Chess":
+		m.activeModel = chess.InitChessModel()
 	default:
 		return m
 	}
