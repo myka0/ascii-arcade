@@ -47,6 +47,8 @@ type ChessModel struct {
 
 	isWhiteKingInCheck bool
 	isBlackKingInCheck bool
+
+	pawnPromotionTarget *t.Position
 }
 
 // InitChessModel creates and initializes a new chess model.
@@ -151,6 +153,31 @@ func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) {
 		return
 	}
 
+	// Check if a piece was clicked in the pawn promotion UI
+	if m.pawnPromotionTarget != nil {
+		x, y := m.pawnPromotionTarget.X, m.pawnPromotionTarget.Y
+		color := m.turn * -1
+
+		// Map each zone label to its corresponding piece value
+		promotionOptions := map[string]int8{
+			"knight": Knight,
+			"bishop": Bishop,
+			"rook":   Rook,
+			"queen":  Queen,
+		}
+
+		// Check which promotion option was clicked
+		for label, pieceValue := range promotionOptions {
+			if zone.Get(label).InBounds(msg) {
+				m.board[y][x] = t.Piece{Color: color, Value: pieceValue}
+				m.pawnPromotionTarget = nil
+				return
+			}
+		}
+
+		return
+	}
+
 	// Check if a piece was clicked
 	for y := range m.board {
 		for x := range m.board[y] {
@@ -220,6 +247,11 @@ func (m *ChessModel) handleMovePiece(from, to t.Position) {
 	if piece.Value == Pawn && abs(to.Y-from.Y) == 2 {
 		passY := (from.Y + to.Y) / 2
 		m.enPassantTarget = &t.Position{X: from.X, Y: passY}
+	}
+
+	// Set pawn promotion target if pawn moves to the end of the board
+	if piece.Value == Pawn && ((m.turn == White && to.Y == 0) || (m.turn == Black && to.Y == 7)) {
+		m.pawnPromotionTarget = &t.Position{X: to.X, Y: to.Y}
 	}
 
 	// Disable castling rights for king if it moves

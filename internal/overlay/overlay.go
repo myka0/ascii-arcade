@@ -1,9 +1,11 @@
 package overlay
 
 import (
+	"ascii-arcade/internal/colors"
 	"math"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss/v2"
 	charmansi "github.com/charmbracelet/x/ansi"
 	"github.com/muesli/reflow/ansi"
 )
@@ -42,6 +44,7 @@ func Place(hPos, vPos Position, fg, bg string) string {
 	}
 
 	var b strings.Builder
+	b.WriteRune('\n')
 
 	// Compute vertical split
 	top := int(math.Round(float64(vGap) * vPos.value()))
@@ -81,6 +84,21 @@ func Place(hPos, vPos Position, fg, bg string) string {
 	}
 
 	return b.String()
+}
+
+// NewNotification creates a styled new notification.
+func NewNotification(content string) string {
+	return lipgloss.NewStyle().
+		Padding(2, 4).
+		Foreground(colors.Light2).
+		Background(colors.Dark2).
+		Render(content)
+}
+
+// PlaceNotification creates a notification and places it centered on the main view.
+func PlaceNotification(notifContent, mainView string) string {
+	notification := NewNotification(notifContent)
+	return Place(Center, Center, notification, mainView)
 }
 
 // Obtained from https://github.com/charmbracelet/lipgloss/blob/master/get.go

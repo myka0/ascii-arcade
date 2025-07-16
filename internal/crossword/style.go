@@ -18,7 +18,7 @@ var (
 	Incorrect = colors.Orange
 	Even      = colors.Light1
 	Odd       = colors.Light2
-	DarkText  = colors.Dark
+	DarkText  = colors.Dark1
 	LightText = colors.Light2
 	GreyText  = colors.Medium2
 	Border    = colors.Blue

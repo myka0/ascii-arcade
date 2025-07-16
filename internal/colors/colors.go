@@ -15,5 +15,6 @@ var (
 	Light2  = lipgloss.Color("#C0C0C0")
 	Medium1 = lipgloss.Color("#6A6A6A")
 	Medium2 = lipgloss.Color("#525252")
-	Dark    = lipgloss.Color("#262626")
+	Dark1   = lipgloss.Color("#262626")
+	Dark2   = lipgloss.Color("#1E1E1E")
 )

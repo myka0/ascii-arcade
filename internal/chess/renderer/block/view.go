@@ -1,28 +1,20 @@
-package ascii
+package block
 
 import (
 	t "ascii-arcade/internal/chess/types"
 	"fmt"
+	"image/color"
 
 	"github.com/charmbracelet/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
-// TODO Create ascii background for each piece
-type AsciiRenderer struct {
-	Board      [][]t.Piece
-	Selected   t.Position
-	ValidMoves []t.Position
-
-	WhiteCapturedPieces []t.Piece
-	BlackCapturedPieces []t.Piece
-
-	IsWhiteKingInCheck bool
-	IsBlackKingInCheck bool
+type BlockRenderer struct {
+	t.RenderContext
 }
 
-// View renders the full ascii style chess board.
-func (r AsciiRenderer) View() string {
+// View renders the full block style chess board.
+func (r BlockRenderer) View() string {
 	boardHeight := len(r.Board)
 	pieces := make([][]string, boardHeight)
 
@@ -73,7 +65,7 @@ func (r AsciiRenderer) View() string {
 }
 
 // viewBoard renders a grid of strings into a styled chessboard.
-func (r AsciiRenderer) viewBoard(board [][]string) string {
+func (r BlockRenderer) viewBoard(board [][]string) string {
 	rows := make([]string, len(board))
 
 	for y := range board {
@@ -97,7 +89,7 @@ func (r AsciiRenderer) viewBoard(board [][]string) string {
 }
 
 // viewTakenPieces renders the captured pieces for the given player.
-func (r AsciiRenderer) viewTakenPieces(takenPieces []t.Piece) string {
+func (r BlockRenderer) viewTakenPieces(takenPieces []t.Piece) string {
 	cells := make([]string, 16)
 
 	// Render each piece using appropriate style
@@ -124,7 +116,7 @@ func (r AsciiRenderer) viewTakenPieces(takenPieces []t.Piece) string {
 }
 
 // viewPiece renders a single given chess piece.
-func (r AsciiRenderer) viewPiece(piece int8, style lipgloss.Style) string {
+func (r BlockRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 	switch piece {
 	case Move:
 		return r.move(style)
@@ -143,6 +135,11 @@ func (r AsciiRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 	default:
 		return ""
 	}
+}
+
+// ViewStyledPiece renders a single fully styled chess piece.
+func (r BlockRenderer) ViewStyledPiece(piece int8, color int8, background color.Color) string {
+	return EmptyCell.Background(background).Render(r.viewPiece(piece, pieceStyle(color)))
 }
 
 // pieceStyle returns the appropriate style for the given piece color.

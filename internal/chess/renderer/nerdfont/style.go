@@ -45,18 +45,18 @@ var (
 		Background(colors.Light2)
 
 	EvenCell = EmptyCell.
-			Background(colors.Dark)
+			Background(colors.Dark1)
 
 	MarginEven = lipgloss.NewStyle().
 			Background(colors.Light2).
-			Foreground(colors.Dark)
+			Foreground(colors.Dark1)
 
 	MarginOdd = lipgloss.NewStyle().
-			Background(colors.Dark).
+			Background(colors.Dark1).
 			Foreground(colors.Light2)
 
 	EndMarginEven = lipgloss.NewStyle().
-			Foreground(colors.Dark)
+			Foreground(colors.Dark1)
 
 	EndMarginOdd = lipgloss.NewStyle().
 			Foreground(colors.Light2)

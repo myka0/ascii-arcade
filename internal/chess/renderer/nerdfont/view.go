@@ -3,21 +3,14 @@ package nerdfont
 import (
 	t "ascii-arcade/internal/chess/types"
 	"fmt"
+	"image/color"
 
 	"github.com/charmbracelet/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 type NerdfontRenderer struct {
-	Board      [][]t.Piece
-	Selected   t.Position
-	ValidMoves []t.Position
-
-	WhiteCapturedPieces []t.Piece
-	BlackCapturedPieces []t.Piece
-
-	IsWhiteKingInCheck bool
-	IsBlackKingInCheck bool
+	t.RenderContext
 }
 
 // View renders the full block style chess board.
@@ -162,6 +155,11 @@ func (r NerdfontRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 	default:
 		return ""
 	}
+}
+
+// ViewStyledPiece renders a single fully styled chess piece.
+func (r NerdfontRenderer) ViewStyledPiece(piece int8, color int8, background color.Color) string {
+	return EmptyCell.Background(background).Render(r.viewPiece(piece, pieceStyle(color)))
 }
 
 // pieceStyle returns the appropriate style for the given piece color.

@@ -13,9 +13,9 @@ const (
 
 var (
 	Selected   = colors.Light2
-	Background = colors.Dark
+	Background = colors.Dark1
 	LightText  = colors.Light2
-	DarkText   = colors.Dark
+	DarkText   = colors.Dark1
 	Special    = colors.Purple
 
 	Color1 = colors.Orange

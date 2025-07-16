@@ -21,7 +21,7 @@ var (
 			MarginLeft(16)
 
 	ListHeader = lipgloss.NewStyle().
-			Foreground(colors.Dark).
+			Foreground(colors.Dark1).
 			Background(colors.Purple).
 			Padding(0, 1).
 			MarginTop(1).

@@ -1,4 +1,4 @@
-package ascii
+package block
 
 import (
 	"ascii-arcade/internal/colors"
@@ -47,5 +47,5 @@ var (
 		Background(colors.Light2)
 
 	EvenCell = EmptyCell.
-			Background(colors.Dark)
+			Background(colors.Dark1)
 )
