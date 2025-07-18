@@ -29,11 +29,64 @@ const (
 func (m ChessModel) View() string {
 	renderer := m.getPieceRenderer(m.renderer)
 
+	if m.gameOver {
+		return m.viewGameOver(renderer)
+	}
+
 	if m.pawnPromotionTarget != nil {
 		return m.viewPawnPromotion(renderer)
 	}
 
 	return renderer.View()
+}
+
+// viewGameOver renders the end of game UI.
+func (m ChessModel) viewGameOver(renderer PieceRenderer) string {
+	mainView := renderer.View()
+	background := colors.Dark2
+
+	// Determine game outcome and assign appropriate styling
+	var winner string
+	var color color.Color
+	switch {
+	case m.whiteWins:
+		winner = "White wins!"
+		color = colors.Orange
+	case m.blackWins:
+		winner = "Black wins!"
+		color = colors.Purple
+	default:
+		winner = "Stalemate!"
+		color = colors.Blue
+	}
+
+	winner = lipgloss.NewStyle().Foreground(color).Render(winner)
+
+	buttonStyle := lipgloss.NewStyle().
+		Foreground(background).
+		Background(color).
+		Padding(0, 1)
+
+	// Box used to align buttons
+	buttonBox := lipgloss.NewStyle().
+		Background(background).
+		Width(12)
+
+	// Create interactive buttons and join them side by side
+	resetButton := zone.Mark("reset", buttonStyle.Align(lipgloss.Left).Render("Reset"))
+	exitButton := zone.Mark("exit", buttonStyle.Align(lipgloss.Right).Render("Exit"))
+	buttons := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		buttonBox.Align(lipgloss.Left).Render(resetButton),
+		buttonBox.Align(lipgloss.Right).Render(exitButton),
+	)
+
+	return overlay.PlaceNotification(
+		mainView,
+		"Game over.",
+		winner,
+		buttons,
+	)
 }
 
 // viewPawnPromotion renders the pawn promotion UI.
@@ -48,14 +101,13 @@ func (m ChessModel) viewPawnPromotion(renderer PieceRenderer) string {
 	rook := zone.Mark("rook", renderer.ViewStyledPiece(Rook, color, background))
 	queen := zone.Mark("queen", renderer.ViewStyledPiece(Queen, color, background))
 
-	// Build the promotion UI
-	content := lipgloss.JoinVertical(
-		lipgloss.Center,
-		"Select a piece below.\n",
-		lipgloss.JoinHorizontal(lipgloss.Top, knight, bishop, rook, queen),
-	)
+	pieces := lipgloss.JoinHorizontal(lipgloss.Top, knight, bishop, rook, queen)
 
-	return overlay.PlaceNotification(content, mainView)
+	return overlay.PlaceNotification(
+		mainView,
+		"Select a piece below.",
+		pieces,
+	)
 }
 
 // getPieceRenderer returns the appropriate piece renderer.

@@ -201,6 +201,29 @@ func (m *ChessModel) generateCastlingMoves(king t.Position) []t.Position {
 	return validMoves
 }
 
+// hasValidMoves checks if the given color has at least one legal move.
+func (m *ChessModel) hasValidMoves(color int8) bool {
+	for y := range 8 {
+		for x := range 8 {
+			p := m.board[y][x]
+
+			// Skip empty squares or pieces of the opposite color
+			if p.Color != color || p.Value == Empty {
+				continue
+			}
+
+			// Generate and check if there are valid moves
+			m.generateValidMoves(pos(x, y))
+			if len(m.validMoves) > 0 {
+				m.validMoves = nil
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // addMovesIfNotCheck filters the given moves to only include those that don't
 // leave the player's king in check.
 func (m *ChessModel) addMovesIfNotCheck(selected t.Position, moves []t.Position) {

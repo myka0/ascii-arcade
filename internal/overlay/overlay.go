@@ -61,15 +61,14 @@ func Place(hPos, vPos Position, fg, bg string) string {
 		fgLine := fgLines[i]
 		bgLine := bgLines[top+i]
 
-		fgLength := ansi.PrintableRuneWidth(fgLine)
-		hSplit := int(math.Round(float64(bgWidth-fgLength) * hPos.value()))
+		hSplit := int(math.Round(float64(bgWidth-fgWidth) * hPos.value()))
 
 		// Left background portion
 		left := charmansi.Truncate(bgLine, hSplit, "")
 		leftLength := ansi.PrintableRuneWidth(left)
 
 		// Right portion after the overlay
-		right := charmansi.TruncateLeft(bgLine, leftLength+fgLength, "")
+		right := charmansi.TruncateLeft(bgLine, leftLength+fgWidth, "")
 
 		b.WriteString(left)
 		b.WriteString(fgLine)
@@ -89,15 +88,39 @@ func Place(hPos, vPos Position, fg, bg string) string {
 // NewNotification creates a styled new notification.
 func NewNotification(content string) string {
 	return lipgloss.NewStyle().
-		Padding(2, 4).
+		Padding(1, 4, 0, 4).
 		Foreground(colors.Light2).
 		Background(colors.Dark2).
 		Render(content)
 }
 
 // PlaceNotification creates a notification and places it centered on the main view.
-func PlaceNotification(notifContent, mainView string) string {
-	notification := NewNotification(notifContent)
+func PlaceNotification(mainView string, notifContent ...string) string {
+	maxWidth := 0
+	for _, line := range notifContent {
+		_, w := getLines(line)
+		if maxWidth < w {
+			maxWidth = w
+		}
+	}
+
+	block := lipgloss.NewStyle().
+		Align(lipgloss.Center).
+		Background(colors.Dark2).
+		PaddingBottom(1).
+		Width(maxWidth)
+
+	var content []string
+	for _, line := range notifContent {
+		content = append(content, block.Foreground(colors.Light2).Render(line))
+	}
+
+	notifBody := lipgloss.JoinVertical(
+		lipgloss.Center,
+		content...,
+	)
+
+	notification := NewNotification(notifBody)
 	return Place(Center, Center, notification, mainView)
 }
 

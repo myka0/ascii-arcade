@@ -27,7 +27,7 @@ func (r NerdfontRenderer) View() string {
 			if piece.Value == King {
 				if (piece.Color == White && r.IsWhiteKingInCheck) ||
 					(piece.Color == Black && r.IsBlackKingInCheck) {
-					pieces[y] = append(pieces[y], r.viewPiece(piece.Value, TakePiece))
+					pieces[y] = append(pieces[y], r.viewPiece(piece.Value, CheckPiece))
 					continue
 				}
 			}

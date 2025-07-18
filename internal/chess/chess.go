@@ -26,8 +26,6 @@ const (
 	Black = 1
 )
 
-// TODO Win condition and stalemate
-// TODO Pawn romotion
 type ChessModel struct {
 	renderer   int
 	board      [][]t.Piece
@@ -49,6 +47,11 @@ type ChessModel struct {
 	isBlackKingInCheck bool
 
 	pawnPromotionTarget *t.Position
+
+	whiteWins bool
+	blackWins bool
+	stalemate bool
+	gameOver  bool
 }
 
 // InitChessModel creates and initializes a new chess model.
@@ -66,6 +69,13 @@ func InitChessModel() *ChessModel {
 
 		isWhiteKingInCheck: false,
 		isBlackKingInCheck: false,
+
+		pawnPromotionTarget: nil,
+
+		whiteWins: false,
+		blackWins: false,
+		stalemate: false,
+		gameOver:  false,
 	}
 
 	return &m
@@ -139,7 +149,7 @@ func (m *ChessModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.MouseMsg:
 		switch msg := msg.(type) {
 		case tea.MouseClickMsg:
-			m.handleMouseClick(msg)
+			return m.handleMouseClick(msg)
 		}
 	}
 
@@ -147,10 +157,22 @@ func (m *ChessModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleMouseClick handles mouse interactions.
-func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) {
+func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	// Only respond to left clicks
 	if msg.Mouse().Button != tea.MouseLeft {
-		return
+		return m, nil
+	}
+
+	// Handle game over UI
+	if m.gameOver {
+		switch {
+		case zone.Get("reset").InBounds(msg):
+			return InitChessModel(), nil
+		case zone.Get("exit").InBounds(msg):
+			return m, func() tea.Msg { return "home" }
+		default:
+			return m, nil
+		}
 	}
 
 	// Check if a piece was clicked in the pawn promotion UI
@@ -171,11 +193,11 @@ func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) {
 			if zone.Get(label).InBounds(msg) {
 				m.board[y][x] = t.Piece{Color: color, Value: pieceValue}
 				m.pawnPromotionTarget = nil
-				return
+				return m, nil
 			}
 		}
 
-		return
+		return m, nil
 	}
 
 	// Check if a piece was clicked
@@ -195,14 +217,14 @@ func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) {
 				// Move if clicked on a valid move position
 				if slices.Contains(m.validMoves, clicked) {
 					m.handleMovePiece(m.selected, clicked)
-					return
+					return m, nil
 				}
 
 				// Deselect if clicked the same square again
 				if m.selected.X == x && m.selected.Y == y {
 					m.selected = pos(-1, -1)
 					m.validMoves = nil
-					return
+					return m, nil
 				}
 
 				// Select a different piece
@@ -212,7 +234,7 @@ func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) {
 					m.generateValidMoves(clicked)
 				}
 
-				return
+				return m, nil
 			}
 
 			// If no piece is selected piece, select the clicked piece
@@ -222,9 +244,11 @@ func (m *ChessModel) handleMouseClick(msg tea.MouseMsg) {
 				m.generateValidMoves(clicked)
 			}
 
-			return
+			return m, nil
 		}
 	}
+
+	return m, nil
 }
 
 // handleMovePiece executes a move from one position to another.
@@ -318,6 +342,14 @@ func (m *ChessModel) handleMovePiece(from, to t.Position) {
 	// Update king check status
 	m.isWhiteKingInCheck = m.isKingInCheck(White)
 	m.isBlackKingInCheck = m.isKingInCheck(Black)
+
+	// Check game end conditions
+	if !m.hasValidMoves(m.turn) {
+		m.whiteWins = m.turn == Black && m.isBlackKingInCheck
+		m.blackWins = m.turn == White && m.isWhiteKingInCheck
+		m.stalemate = !m.whiteWins && !m.blackWins
+		m.gameOver = true
+	}
 }
 
 // addTakenPiece adds a piece to the appropriate captured piece list.

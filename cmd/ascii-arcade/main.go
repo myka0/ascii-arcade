@@ -121,6 +121,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.isGameSelected {
 		var cmd tea.Cmd
 		m.activeModel, cmd = m.activeModel.Update(msg)
+
+		// If the active game wants to go home, exit the game
+		if cmd != nil && cmd() == "home" {
+			m.isGameSelected = false
+			return m, nil
+		}
+
 		return m, cmd
 	}
 
