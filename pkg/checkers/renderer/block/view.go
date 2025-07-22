@@ -1,7 +1,7 @@
-package ascii
+package block
 
 import (
-	t "ascii-arcade/internal/chess/types"
+	t "ascii-arcade/pkg/checkers/types"
 	"fmt"
 	"image/color"
 
@@ -9,13 +9,12 @@ import (
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
-// TODO Create ascii background for each piece
-type AsciiRenderer struct {
+type BlockRenderer struct {
 	t.RenderContext
 }
 
-// View renders the full ascii style chess board.
-func (r AsciiRenderer) View() string {
+// View renders the full block style checkers board.
+func (r BlockRenderer) View() string {
 	boardHeight := len(r.Board)
 	pieces := make([][]string, boardHeight)
 
@@ -23,16 +22,6 @@ func (r AsciiRenderer) View() string {
 	for y := range r.Board {
 		for x := range r.Board[y] {
 			piece := r.Board[y][x]
-
-			// Highlight kings in check
-			if piece.Value == King {
-				if (piece.Color == White && r.IsWhiteKingInCheck) ||
-					(piece.Color == Black && r.IsBlackKingInCheck) {
-					pieces[y] = append(pieces[y], r.viewPiece(piece.Value, CheckPiece))
-					continue
-				}
-			}
-
 			pieces[y] = append(pieces[y], r.viewPiece(piece.Value, pieceStyle(piece.Color)))
 		}
 	}
@@ -56,17 +45,19 @@ func (r AsciiRenderer) View() string {
 		}
 	}
 
+	// Highlight valid captures
+	for _, move := range r.CaptureMoves {
+		pieces[move.To.Y][move.To.X] = r.viewPiece(Move, SelectedPiece)
+		from := r.Board[move.From.Y][move.From.X]
+		pieces[move.From.Y][move.From.X] = r.viewPiece(from.Value, SelectedPiece)
+	}
+
 	// Assemble the full view
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		r.viewTakenPieces(r.BlackCapturedPieces)+"\n",
-		r.viewBoard(pieces),
-		r.viewTakenPieces(r.WhiteCapturedPieces),
-	)
+	return r.viewBoard(pieces)
 }
 
-// viewBoard renders a grid of strings into a styled chessboard.
-func (r AsciiRenderer) viewBoard(board [][]string) string {
+// viewBoard renders a grid of strings into a styled checkersboard.
+func (r BlockRenderer) viewBoard(board [][]string) string {
 	rows := make([]string, len(board))
 
 	for y := range board {
@@ -89,48 +80,13 @@ func (r AsciiRenderer) viewBoard(board [][]string) string {
 	return lipgloss.JoinVertical(lipgloss.Left, rows...)
 }
 
-// viewTakenPieces renders the captured pieces for the given player.
-func (r AsciiRenderer) viewTakenPieces(takenPieces []t.Piece) string {
-	cells := make([]string, 16)
-
-	// Render each piece using appropriate style
-	for i, piece := range takenPieces {
-		cells[i] = r.viewPiece(piece.Value, pieceStyle(piece.Color))
-	}
-
-	// Apply cell styling and separate into two rows based on index parity
-	var top, bot []string
-	for i, content := range cells {
-		cell := EmptyCell.Render(content)
-		if i%2 == 0 {
-			top = append(top, cell)
-		} else {
-			bot = append(bot, cell)
-		}
-	}
-
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		lipgloss.JoinHorizontal(lipgloss.Top, top...),
-		lipgloss.JoinHorizontal(lipgloss.Top, bot...),
-	)
-}
-
-// viewPiece renders a single given chess piece.
-func (r AsciiRenderer) viewPiece(piece int8, style lipgloss.Style) string {
+// viewPiece renders a single given checkers piece.
+func (r BlockRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 	switch piece {
 	case Move:
 		return r.move(style)
 	case Pawn:
 		return r.pawn(style)
-	case Rook:
-		return r.rook(style)
-	case Knight:
-		return r.knight(style)
-	case Bishop:
-		return r.bishop(style)
-	case Queen:
-		return r.queen(style)
 	case King:
 		return r.king(style)
 	default:
@@ -138,8 +94,8 @@ func (r AsciiRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 	}
 }
 
-// ViewStyledPiece renders a single fully styled chess piece.
-func (r AsciiRenderer) ViewStyledPiece(piece int8, color int8, background color.Color) string {
+// ViewStyledPiece renders a single fully styled checkers piece.
+func (r BlockRenderer) ViewStyledPiece(piece int8, color int8, background color.Color) string {
 	return EmptyCell.Background(background).Render(r.viewPiece(piece, pieceStyle(color)))
 }
 

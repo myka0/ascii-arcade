@@ -1,6 +1,6 @@
 package chess
 
-import t "ascii-arcade/internal/chess/types"
+import t "ascii-arcade/pkg/chess/types"
 
 // isKingInCheck returns true if the king of the given color is under attack.
 func (m *ChessModel) isKingInCheck(color int8) bool {

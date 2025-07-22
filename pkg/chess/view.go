@@ -1,12 +1,12 @@
-package checkers
+package chess
 
 import (
-	"ascii-arcade/internal/checkers/renderer/ascii"
-	"ascii-arcade/internal/checkers/renderer/block"
-	"ascii-arcade/internal/checkers/renderer/nerdfont"
-	t "ascii-arcade/internal/checkers/types"
+	"ascii-arcade/pkg/chess/renderer/ascii"
+	"ascii-arcade/pkg/chess/renderer/block"
+	"ascii-arcade/pkg/chess/renderer/nerdfont"
+	t "ascii-arcade/pkg/chess/types"
 	"ascii-arcade/internal/colors"
-	"ascii-arcade/internal/overlay"
+	"ascii-arcade/pkg/overlay"
 
 	"image/color"
 
@@ -26,18 +26,22 @@ const (
 )
 
 // View renders the entire Chess board.
-func (m CheckersModel) View() string {
+func (m ChessModel) View() string {
 	renderer := m.getPieceRenderer(m.renderer)
 
 	if m.gameOver {
 		return m.viewGameOver(renderer)
 	}
 
+	if m.pawnPromotionTarget != nil {
+		return m.viewPawnPromotion(renderer)
+	}
+
 	return renderer.View()
 }
 
 // viewGameOver renders the end of game UI.
-func (m CheckersModel) viewGameOver(renderer PieceRenderer) string {
+func (m ChessModel) viewGameOver(renderer PieceRenderer) string {
 	mainView := renderer.View()
 	background := colors.Dark2
 
@@ -85,13 +89,39 @@ func (m CheckersModel) viewGameOver(renderer PieceRenderer) string {
 	)
 }
 
+// viewPawnPromotion renders the pawn promotion UI.
+func (m ChessModel) viewPawnPromotion(renderer PieceRenderer) string {
+	mainView := renderer.View()
+	color := m.turn * -1
+	background := colors.Dark2
+
+	// Render each promotion piece option
+	knight := zone.Mark("knight", renderer.ViewStyledPiece(Knight, color, background))
+	bishop := zone.Mark("bishop", renderer.ViewStyledPiece(Bishop, color, background))
+	rook := zone.Mark("rook", renderer.ViewStyledPiece(Rook, color, background))
+	queen := zone.Mark("queen", renderer.ViewStyledPiece(Queen, color, background))
+
+	pieces := lipgloss.JoinHorizontal(lipgloss.Top, knight, bishop, rook, queen)
+
+	return overlay.PlaceNotification(
+		mainView,
+		"Select a piece below.",
+		pieces,
+	)
+}
+
 // getPieceRenderer returns the appropriate piece renderer.
-func (m CheckersModel) getPieceRenderer(renderer int) PieceRenderer {
+func (m ChessModel) getPieceRenderer(renderer int) PieceRenderer {
 	context := t.RenderContext{
-		Board:        m.board,
-		Selected:     m.selected,
-		ValidMoves:   m.validMoves,
-		CaptureMoves: m.captureMoves,
+		Board:      m.board,
+		Selected:   m.selected,
+		ValidMoves: m.validMoves,
+
+		WhiteCapturedPieces: m.whiteCapturedPieces,
+		BlackCapturedPieces: m.blackCapturedPieces,
+
+		IsWhiteKingInCheck: m.isWhiteKingInCheck,
+		IsBlackKingInCheck: m.isBlackKingInCheck,
 	}
 
 	switch renderer {

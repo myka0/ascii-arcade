@@ -1,12 +1,12 @@
 package main
 
 import (
-	"ascii-arcade/internal/checkers"
-	"ascii-arcade/internal/chess"
-	"ascii-arcade/internal/connections"
-	"ascii-arcade/internal/crossword"
-	"ascii-arcade/internal/solitaire"
-	"ascii-arcade/internal/wordle"
+	"ascii-arcade/pkg/checkers"
+	"ascii-arcade/pkg/chess"
+	"ascii-arcade/pkg/connections"
+	"ascii-arcade/pkg/crossword"
+	"ascii-arcade/pkg/solitaire"
+	"ascii-arcade/pkg/wordle"
 
 	"flag"
 	"fmt"

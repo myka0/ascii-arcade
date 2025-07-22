@@ -1,6 +1,6 @@
 package chess
 
-import t "ascii-arcade/internal/chess/types"
+import t "ascii-arcade/pkg/chess/types"
 
 // generateValidMoves determines all legal moves for the selected piece
 // and stores them in m.validMoves, filtering out any that leave the king in check.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	t "ascii-arcade/internal/chess/types"
+	t "ascii-arcade/pkg/chess/types"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"

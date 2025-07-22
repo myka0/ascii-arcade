@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	t "ascii-arcade/internal/checkers/types"
+	t "ascii-arcade/pkg/checkers/types"
 )
 
 // generateValidMoves determines all legal moves for the selected piece

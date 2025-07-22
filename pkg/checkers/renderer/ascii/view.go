@@ -1,7 +1,7 @@
-package nerdfont
+package ascii
 
 import (
-	t "ascii-arcade/internal/checkers/types"
+	t "ascii-arcade/pkg/checkers/types"
 	"fmt"
 	"image/color"
 
@@ -9,12 +9,13 @@ import (
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
-type NerdfontRenderer struct {
+// TODO Create ascii background for each piece
+type AsciiRenderer struct {
 	t.RenderContext
 }
 
-// View renders the full block style checkers board.
-func (r NerdfontRenderer) View() string {
+// View renders the full ascii style checkers board.
+func (r AsciiRenderer) View() string {
 	boardHeight := len(r.Board)
 	pieces := make([][]string, boardHeight)
 
@@ -57,8 +58,8 @@ func (r NerdfontRenderer) View() string {
 }
 
 // viewBoard renders a grid of strings into a styled checkersboard.
-func (r NerdfontRenderer) viewBoard(board [][]string) string {
-	var rows []string
+func (r AsciiRenderer) viewBoard(board [][]string) string {
+	rows := make([]string, len(board))
 
 	for y := range board {
 		var row []string
@@ -74,34 +75,14 @@ func (r NerdfontRenderer) viewBoard(board [][]string) string {
 			row = append(row, cell)
 		}
 
-		rows = append(rows, r.viewMarginRow(y))
-		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, row...))
+		rows[y] = lipgloss.JoinHorizontal(lipgloss.Top, row...)
 	}
-
-	rows = append(rows, r.viewMarginRow(len(board)))
 
 	return lipgloss.JoinVertical(lipgloss.Left, rows...)
 }
 
-func (r NerdfontRenderer) viewMarginRow(y int) string {
-	top := make([]string, len(r.Board))
-	for x := range len(r.Board) {
-		isEven := (x+y)%2 == 0
-
-		if y == 0 {
-			top[x] = styleCell(isEven, EndMarginEven, EndMarginOdd).Render("▄▄▄▄▄")
-		} else if y == len(r.Board) {
-			top[x] = styleCell(!isEven, EndMarginEven, EndMarginOdd).Render("▀▀▀▀▀")
-		} else {
-			top[x] = styleCell(isEven, MarginEven, MarginOdd).Render("▄▄▄▄▄")
-		}
-	}
-
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, top[:]...)
-}
-
 // viewPiece renders a single given checkers piece.
-func (r NerdfontRenderer) viewPiece(piece int8, style lipgloss.Style) string {
+func (r AsciiRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 	switch piece {
 	case Move:
 		return r.move(style)
@@ -115,7 +96,7 @@ func (r NerdfontRenderer) viewPiece(piece int8, style lipgloss.Style) string {
 }
 
 // ViewStyledPiece renders a single fully styled checkers piece.
-func (r NerdfontRenderer) ViewStyledPiece(piece int8, color int8, background color.Color) string {
+func (r AsciiRenderer) ViewStyledPiece(piece int8, color int8, background color.Color) string {
 	return EmptyCell.Background(background).Render(r.viewPiece(piece, pieceStyle(color)))
 }
 
