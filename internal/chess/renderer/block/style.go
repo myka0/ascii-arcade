@@ -44,8 +44,8 @@ var (
 			Height(Height)
 
 	OddCell = EmptyCell.
-		Background(colors.Light2)
+		Background(colors.Dark1)
 
 	EvenCell = EmptyCell.
-			Background(colors.Dark1)
+			Background(colors.Light2)
 )

@@ -141,6 +141,8 @@ func (m *ChessModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+r":
+			return InitChessModel(), nil
+		case "ctrl+v":
 			m.renderer = (m.renderer + 1) % 3
 			return m, nil
 		}

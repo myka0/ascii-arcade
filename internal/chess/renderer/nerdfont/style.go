@@ -42,22 +42,22 @@ var (
 			Width(Width)
 
 	OddCell = EmptyCell.
-		Background(colors.Light2)
+		Background(colors.Dark1)
 
 	EvenCell = EmptyCell.
-			Background(colors.Dark1)
+			Background(colors.Light2)
 
 	MarginEven = lipgloss.NewStyle().
-			Background(colors.Light2).
-			Foreground(colors.Dark1)
-
-	MarginOdd = lipgloss.NewStyle().
 			Background(colors.Dark1).
 			Foreground(colors.Light2)
 
-	EndMarginEven = lipgloss.NewStyle().
+	MarginOdd = lipgloss.NewStyle().
+			Background(colors.Light2).
 			Foreground(colors.Dark1)
 
-	EndMarginOdd = lipgloss.NewStyle().
+	EndMarginEven = lipgloss.NewStyle().
 			Foreground(colors.Light2)
+
+	EndMarginOdd = lipgloss.NewStyle().
+			Foreground(colors.Dark1)
 )
