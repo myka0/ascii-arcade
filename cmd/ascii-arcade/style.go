@@ -31,6 +31,10 @@ var (
 			Foreground(colors.Light2).
 			MarginLeft(2)
 
+	UnimplementedListEntry = lipgloss.NewStyle().
+			Foreground(colors.Medium2).
+			MarginLeft(2)
+
 	SelectedListEntry = lipgloss.NewStyle().
 				Foreground(colors.Pink)
 

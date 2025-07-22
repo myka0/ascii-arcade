@@ -7,6 +7,21 @@ import (
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
+var implementedGames = map[string]bool{
+	"Tetris":       false,
+	"Snake":        false,
+	"Solitaire":    true,
+	"Minesweeper":  false,
+	"Crossword":    true,
+	"Wordle":       true,
+	"Connections":  true,
+	"Sudoku":       false,
+	"Go":           false,
+	"Chess":        true,
+	"Checkers":     true,
+	"Connect Four": false,
+}
+
 // View renders the full UI centered in the terminal.
 func (m model) View() string {
 	// If a game is selected, render the game UI
@@ -60,6 +75,8 @@ func (m model) viewDefaultList() string {
 		for _, game := range gamesList.Games {
 			if m.games[m.selectedGameIdx] == game {
 				list += SelectedListEntry.Render("> "+game) + "\n"
+			} else if !implementedGames[game] {
+				list += UnimplementedListEntry.Render(game) + "\n"
 			} else {
 				list += ListEntry.Render(game) + "\n"
 			}
@@ -82,6 +99,8 @@ func (m model) viewFilteredList() string {
 	for i, game := range m.games {
 		if m.selectedGameIdx == i {
 			list += SelectedListEntry.Render("> "+game) + "\n"
+		} else if !implementedGames[game] {
+			list += UnimplementedListEntry.Render(game) + "\n"
 		} else {
 			list += ListEntry.Render(game) + "\n"
 		}
