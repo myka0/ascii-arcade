@@ -18,10 +18,10 @@ var (
 	DarkText   = colors.Dark1
 	Special    = colors.Purple
 
-	Color1 = colors.Orange
-	Color2 = colors.Pink
+	Color1 = colors.Yellow
+	Color2 = colors.Orange
 	Color3 = colors.Blue
-	Color4 = colors.Yellow
+	Color4 = colors.Pink
 
 	BGSelected   = lipgloss.NewStyle().Background(Selected)
 	BGBackground = lipgloss.NewStyle().Background(Background)

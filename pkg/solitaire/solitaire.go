@@ -68,6 +68,8 @@ func (m *SolitaireModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle keyboard input
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+r":
+			return InitSolitaireModel(), nil
 		case "space":
 			m.handleDrawFromStock()
 		case "w":
@@ -255,8 +257,6 @@ func (m SolitaireModel) canMoveToTableau(card Card, tableau Deck) bool {
 	// Card can be placed if it's the next rank down
 	return card.Rank == tableau.Top().Rank-1
 }
-
-// canMoveSequenceToTableau checks if the given sequence of cards can be placed on the target tableau pile.
 
 // View renders the entire Solitaire board.
 func (m SolitaireModel) View() string {

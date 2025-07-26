@@ -32,8 +32,8 @@ var (
 			MarginLeft(2)
 
 	UnimplementedListEntry = lipgloss.NewStyle().
-			Foreground(colors.Medium2).
-			MarginLeft(2)
+				Foreground(colors.Medium2).
+				MarginLeft(2)
 
 	SelectedListEntry = lipgloss.NewStyle().
 				Foreground(colors.Pink)
@@ -52,8 +52,8 @@ var (
 	KeyActionStyle = lipgloss.NewStyle().
 			Foreground(colors.Medium2)
 
-	Header = lipgloss.NewStyle().Foreground(colors.Purple).Render(`
-         █████╗ ███████╗ ██████╗██╗██╗
+	Header = lipgloss.NewStyle().Foreground(colors.Purple).Render(
+		`         █████╗ ███████╗ ██████╗██╗██╗
         ██╔══██╗██╔════╝██╔════╝██║██║
         ███████║███████╗██║     ██║██║
         ██╔══██║╚════██║██║     ██║██║

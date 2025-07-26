@@ -1,11 +1,11 @@
 package chess
 
 import (
+	"ascii-arcade/internal/colors"
 	"ascii-arcade/pkg/chess/renderer/ascii"
 	"ascii-arcade/pkg/chess/renderer/block"
 	"ascii-arcade/pkg/chess/renderer/nerdfont"
 	t "ascii-arcade/pkg/chess/types"
-	"ascii-arcade/internal/colors"
 	"ascii-arcade/pkg/overlay"
 
 	"image/color"

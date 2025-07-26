@@ -1,11 +1,11 @@
 package checkers
 
 import (
+	"ascii-arcade/internal/colors"
 	"ascii-arcade/pkg/checkers/renderer/ascii"
 	"ascii-arcade/pkg/checkers/renderer/block"
 	"ascii-arcade/pkg/checkers/renderer/nerdfont"
 	t "ascii-arcade/pkg/checkers/types"
-	"ascii-arcade/internal/colors"
 	"ascii-arcade/pkg/overlay"
 
 	"image/color"

@@ -24,28 +24,32 @@ var implementedGames = map[string]bool{
 
 // View renders the full UI centered in the terminal.
 func (m model) View() string {
-	// If a game is selected, render the game UI
-	if m.isGameSelected {
-		game := m.activeModel.(ViewModel).View()
-		return zone.Scan(
-			lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, game),
+	var view string
+	switch {
+	case m.isHelpSelected:
+		// If a help page is selected, render the help page
+		view = m.activeModel.(ViewModel).Help()
+	case m.isGameSelected:
+		// If a game is selected, render the game UI
+		view = m.activeModel.(ViewModel).View()
+	default:
+		// Render the home menu
+		keyBindings := lipgloss.NewStyle().MarginLeft(8).Render(m.viewKeyBindings())
+		message := CenteredText.Render(m.message) + "\n"
+
+		view = MenuStyle.Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				Header,
+				m.viewGameList(),
+				message,
+				keyBindings,
+			),
 		)
 	}
 
-	keyBindings := lipgloss.NewStyle().MarginLeft(8).Render(m.viewKeyBindings())
-	message := CenteredText.Render(m.message) + "\n"
-
-	// Render the home menu
-	menu := lipgloss.JoinVertical(
-		lipgloss.Left,
-		Header,
-		m.viewGameList(),
-		message,
-		keyBindings,
-	)
-
-	return lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center,
-		MenuStyle.Render(menu),
+	return zone.Scan(
+		lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, view),
 	)
 }
 

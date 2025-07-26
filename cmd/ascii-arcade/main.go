@@ -61,6 +61,7 @@ type Saver interface {
 // ViewModel defines a view model that can render itself.
 type ViewModel interface {
 	View() string
+	Help() string
 }
 
 // model holds global app state.
@@ -68,6 +69,7 @@ type model struct {
 	windowHeight    int
 	windowWidth     int
 	isGameSelected  bool
+	isHelpSelected  bool
 	activeModel     tea.Model
 	selectedGame    string
 	selectedGameIdx int
@@ -110,12 +112,46 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+h":
 			m.isGameSelected = false
+			m.isHelpSelected = false
+			return m, nil
+
+		case "?":
+			if m.isGameSelected {
+				m.isHelpSelected = !m.isHelpSelected
+			}
 			return m, nil
 		}
 
 	// If the window is resized, store its new dimensions
 	case tea.WindowSizeMsg:
 		return m, m.handleResize(msg)
+	}
+
+	// If the help is selected use the help key bindings
+	if m.isHelpSelected {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "enter":
+				m.isHelpSelected = false
+				return m, nil
+			}
+
+		case tea.MouseMsg:
+			switch msg := msg.(type) {
+			case tea.MouseClickMsg:
+				if msg.Mouse().Button != tea.MouseLeft {
+					return m, nil
+				}
+
+				if zone.Get("continue").InBounds(msg) {
+					m.isHelpSelected = false
+					return m, nil
+				}
+			}
+		}
+
+		return m, nil
 	}
 
 	// If the game is selected, pass the keypress to the active model
@@ -210,6 +246,7 @@ func (m *model) handleSwitchModel() tea.Model {
 	}
 
 	m.isGameSelected = true
+	m.isHelpSelected = true
 	return m
 }
 

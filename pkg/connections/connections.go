@@ -58,8 +58,6 @@ func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle keyboard input
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
-			return m, tea.Quit
 		case "ctrl+s":
 			m.handleShuffle()
 		case "ctrl+d":
