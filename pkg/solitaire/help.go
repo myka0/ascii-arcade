@@ -25,13 +25,14 @@ from Ace to King.
 • Empty columns can be filled with Kings or valid sequences.
 • Draw from the stock when no more moves are available.
 
-You can use either the mouse or keyboard shortcuts to play.
-Keyboard shortcuts will apply the first valid move available.`
+You can play using either the mouse or keyboard shortcuts.
+Both methods will perform the first valid move available
+for the selected deck.`
 
 	Shortcuts = `• Press space to draw from the stock.
 • Press w to play the top card from the waste pile.
 • Press 1–7 to play from tableau columns.
-• Press !, @, #, or $ to play from the foundations (♠, ♣, ♥, ♦).
+• Press shift + 1-4 to play from foundations (♠, ♣, ♥, ♦).
 • Press u to undo your last move.
 
 Clear all the cards to win!`
@@ -51,8 +52,9 @@ func (m SolitaireModel) Help() string {
 
 	// Define keybindings specific to the game
 	keybinds := []components.Keybind{
-		{Key: "ctrl+r", Action: "reset"},
 		{Key: "click", Action: "select"},
+		{Key: "r-click", Action: "undo"},
+		{Key: "ctrl+r", Action: "reset"},
 		{Key: "space", Action: "draw"},
 		{Key: "w", Action: "waste"},
 		{Key: "u", Action: "undo"},

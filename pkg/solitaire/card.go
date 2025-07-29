@@ -60,6 +60,11 @@ func (c *Card) FlipFaceDown() {
 	c.FaceDown = true
 }
 
+// Flip flips the card face up or down.
+func (c *Card) Flip() {
+	c.FaceDown = !c.FaceDown
+}
+
 // View returns a string representation of the card.
 func (c Card) View() string {
 	var card string

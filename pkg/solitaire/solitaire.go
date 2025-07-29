@@ -1,11 +1,21 @@
 package solitaire
 
 import (
+	"fmt"
 	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
+
+type Move struct {
+	From    *Deck
+	To      *Deck
+	Cards   []*Card
+	Flip    bool
+	Tableau bool
+}
 
 // SolitaireModel represents the state of a solitaire game.
 type SolitaireModel struct {
@@ -13,6 +23,7 @@ type SolitaireModel struct {
 	waste       Deck
 	foundations [4]Deck
 	tableau     [7]Deck
+	moves       []Move
 }
 
 // InitSolitaireModel creates and initializes a new solitaire model.
@@ -106,6 +117,8 @@ func (m *SolitaireModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *SolitaireModel) handleDrawFromStock() {
 	// If the stock is empty, recycle all waste cards into stock
 	if m.stock.Size() == 0 {
+		m.addFlipMove(&m.waste, &m.stock, m.waste.Cards...)
+
 		for range m.waste.Size() {
 			card := m.waste.Pop()
 			card.FlipFaceDown()
@@ -119,6 +132,7 @@ func (m *SolitaireModel) handleDrawFromStock() {
 	card := m.stock.Pop()
 	m.waste.Add(card)
 	card.FlipFaceUp()
+	m.addFlipMove(&m.stock, &m.waste, card)
 }
 
 // handleTableauAction attempts to move cards from the specified tableau column.
@@ -141,6 +155,7 @@ func (m *SolitaireModel) handleTableauAction(col int) {
 			source.Top().FlipFaceUp()
 		}
 
+		m.addTableauMove(source, &m.foundations[topCard.Suit], true, topCard)
 		return
 	}
 
@@ -158,17 +173,22 @@ func (m *SolitaireModel) handleTableauAction(col int) {
 			}
 
 			// Move the sequence of cards
-			m.tableau[targetCol].Add(source.Cards[i:]...)
+			cards := source.Cards[i:]
+			m.tableau[targetCol].Add(cards...)
 
 			// Remove them from the source column
-			for range len(source.Cards) - i {
+			for range source.Size() - i {
 				source.Pop()
 			}
 
 			// Flip the new top card if any cards remain
-			if source.Size() != 0 {
+			flipped := false
+			if source.Size() != 0 && source.Top().FaceDown {
 				source.Top().FlipFaceUp()
+				flipped = true
 			}
+
+			m.addTableauMove(source, &m.tableau[targetCol], flipped, cards...)
 
 			return // move only once
 		}
@@ -186,6 +206,7 @@ func (m *SolitaireModel) handleWasteAction() {
 	// Try to move to the foundation
 	if m.canMoveToFoundation(*card) {
 		m.foundations[card.Suit].Add(m.waste.Pop())
+		m.addSimpleMove(&m.waste, &m.foundations[card.Suit], card)
 		return
 	}
 
@@ -194,6 +215,7 @@ func (m *SolitaireModel) handleWasteAction() {
 		if m.canMoveToTableau(*card, m.tableau[i]) {
 			m.tableau[i].Add(card)
 			m.waste.Pop()
+			m.addSimpleMove(&m.waste, &m.tableau[i], card)
 			break
 		}
 	}
@@ -213,18 +235,81 @@ func (m *SolitaireModel) handleFoundationAction(suit int) {
 	for i := range m.tableau {
 		if m.canMoveToTableau(*card, m.tableau[i]) {
 			m.tableau[i].Add(foundation.Pop())
+			m.addSimpleMove(foundation, &m.tableau[i], card)
 			break
 		}
 	}
 }
 
-// TODO: handleUndo
+// handleUndo reverts the last move in the game.
 func (m *SolitaireModel) handleUndo() {
+	// Do nothing if there are no moves to undo
+	if len(m.moves) == 0 {
+		return
+	}
 
+	// Pop the last move
+	last := len(m.moves) - 1
+	move := m.moves[last]
+	m.moves = m.moves[:last]
+
+	// If it was a tableau move and the top card was flipped during the move, flip it back down
+	if move.Tableau && move.From.Size() > 0 {
+		move.From.Top().FlipFaceDown()
+	}
+
+	// Move cards back to their original decks
+	for _, card := range move.Cards {
+		move.From.Add(card)
+		move.To.Remove(card)
+
+		// Flip the card if it was flipped during the move
+		if move.Flip {
+			card.Flip()
+		}
+	}
 }
 
-// TODO: handleMouseClick
+// handleMouseClick handles mouse input.
 func (m *SolitaireModel) handleMouseClick(msg tea.MouseMsg) {
+	// Only respond to left and right clicks
+	if msg.Mouse().Button != tea.MouseLeft && msg.Mouse().Button != tea.MouseRight {
+		return
+	}
+
+	// Undo if the right mouse button is clicked
+	if msg.Mouse().Button == tea.MouseRight {
+		m.handleUndo()
+		return
+	}
+
+	// Handle stock pile click
+	if zone.Get("s").InBounds(msg) {
+		m.handleDrawFromStock()
+		return
+	}
+
+	// Handle waste pile click
+	if zone.Get("w").InBounds(msg) {
+		m.handleWasteAction()
+		return
+	}
+
+	// Handle clicks on foundation piles
+	for i := range m.foundations {
+		if zone.Get(fmt.Sprintf("f%d", i)).InBounds(msg) {
+			m.handleFoundationAction(i)
+			return
+		}
+	}
+
+	// Handle clicks on tableau columns
+	for i := range m.tableau {
+		if zone.Get(fmt.Sprintf("t%d", i)).InBounds(msg) {
+			m.handleTableauAction(i)
+			return
+		}
+	}
 }
 
 // canMoveToFoundation checks if the given card can legally be placed onto its foundation pile.
@@ -258,18 +343,47 @@ func (m SolitaireModel) canMoveToTableau(card Card, tableau Deck) bool {
 	return card.Rank == tableau.Top().Rank-1
 }
 
+// addMove adds a new move to the move history.
+func (m *SolitaireModel) addMove(from, to *Deck, flip, tableau bool, cards ...*Card) {
+	cardsCopy := make([]*Card, len(cards))
+	copy(cardsCopy, cards)
+
+	m.moves = append(m.moves, Move{
+		From:    from,
+		To:      to,
+		Cards:   cardsCopy,
+		Flip:    flip,
+		Tableau: tableau,
+	})
+}
+
+// addSimpleMove adds a basic move.
+func (m *SolitaireModel) addSimpleMove(from, to *Deck, cards ...*Card) {
+	m.addMove(from, to, false, false, cards...)
+}
+
+// addFlipMove adds a move with the flip flag enabled.
+func (m *SolitaireModel) addFlipMove(from, to *Deck, cards ...*Card) {
+	m.addMove(from, to, true, false, cards...)
+}
+
+// addTableauMove adds a move with the tableau flag set.
+func (m *SolitaireModel) addTableauMove(from, to *Deck, flip bool, cards ...*Card) {
+	m.addMove(from, to, false, flip, cards...)
+}
+
 // View renders the entire Solitaire board.
 func (m SolitaireModel) View() string {
 	// Render top row: Stock, Waste, and Foundations
 	topRow := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		m.stock.View(),
-		m.waste.View(),
+		zone.Mark("s", m.stock.View()),
+		zone.Mark("w", m.waste.View()),
 		ViewCardSpacer(),
-		m.foundations[0].View(),
-		m.foundations[1].View(),
-		m.foundations[2].View(),
-		m.foundations[3].View(),
+		zone.Mark("f0", m.foundations[0].View()),
+		zone.Mark("f1", m.foundations[1].View()),
+		zone.Mark("f2", m.foundations[2].View()),
+		zone.Mark("f3", m.foundations[3].View()),
 	)
 
 	// Render middle row: Tableau column hints
@@ -280,16 +394,12 @@ func (m SolitaireModel) View() string {
 	middleRow := lipgloss.JoinHorizontal(lipgloss.Top, columnHints...)
 
 	// Render bottom row: Tableau columns
-	bottomRow := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		m.tableau[0].View(),
-		m.tableau[1].View(),
-		m.tableau[2].View(),
-		m.tableau[3].View(),
-		m.tableau[4].View(),
-		m.tableau[5].View(),
-		m.tableau[6].View(),
-	)
+	var tableauViews []string
+	for i := range m.tableau {
+		label := fmt.Sprintf("t%d", i)
+		tableauViews = append(tableauViews, zone.Mark(label, m.tableau[i].View()))
+	}
+	bottomRow := lipgloss.JoinHorizontal(lipgloss.Top, tableauViews...)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,

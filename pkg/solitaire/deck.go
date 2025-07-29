@@ -3,6 +3,7 @@ package solitaire
 import (
 	"hash/maphash"
 	"math/rand"
+	"slices"
 )
 
 type Deck struct {
@@ -54,6 +55,11 @@ func (d Deck) View() string {
 // Add add new cards to the deck.
 func (d *Deck) Add(cards ...*Card) {
 	d.Cards = append(d.Cards, cards...)
+}
+
+// Remove removes the specified card from the deck.
+func (d *Deck) Remove(card *Card) {
+	d.Cards = slices.Delete(d.Cards, slices.Index(d.Cards, card), slices.Index(d.Cards, card)+1)
 }
 
 // Get returns the card at the given index.
