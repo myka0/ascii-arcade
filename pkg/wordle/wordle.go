@@ -2,6 +2,7 @@ package wordle
 
 import (
 	"fmt"
+	"time"
 	"unicode"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -29,14 +30,10 @@ type WordleModel struct {
 // InitWordleModel creates and initializes a new wordle model.
 // It loads puzzle data from file and sets up the initial game state.
 func InitWordleModel() *WordleModel {
-	date, err := GetLatestDate()
+	today := time.Now().Format("2006-01-02")
+	m, err := LoadGame(today)
 	if err != nil {
-		fmt.Println("Failed to get latest date:", err)
-	}
-
-	m, err := LoadFromFile(date)
-	if err != nil {
-		fmt.Println("Failed to load wordle:", err)
+		m.message = fmt.Sprintf("Failed to load wordle: %v", err)
 	}
 
 	return &m
@@ -83,8 +80,6 @@ func (m *WordleModel) handleReset() {
 	for c := 'A'; c <= 'Z'; c++ {
 		m.keyboard[byte(c)] = keyUntried
 	}
-
-	m.SaveToFile()
 }
 
 // handleDelete removes the last entered letter in the current guess.
