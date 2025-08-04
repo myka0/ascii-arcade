@@ -1,6 +1,6 @@
 module ascii-arcade
 
-go 1.24.1
+go 1.24.4
 
 require (
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.3
