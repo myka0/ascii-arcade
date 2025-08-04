@@ -4,29 +4,108 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 const filename = "data/connections/games.db"
 
-// GetLatestDate returns the date of the most recent connections game state.
-func GetLatestDate() (string, error) {
-	// Open the database
-	db, err := sql.Open("sqlite3", filename)
-	if err != nil {
-		return "", fmt.Errorf("error opening database: %v", err)
-	}
-	defer db.Close()
+// JSON response objects from NYT
+type ConnectionsResponse struct {
+	Status     string     `json:"status"`
+	ID         int        `json:"id"`
+	PrintDate  string     `json:"print_date"`
+	Editor     string     `json:"editor"`
+	Categories []Category `json:"categories"`
+}
 
-	// Get and return the latest date
-	var date string
-	err = db.QueryRow(`SELECT date FROM connections ORDER BY date DESC LIMIT 1`).Scan(&date)
-	return date, err
+type Category struct {
+	Title string `json:"title"`
+	Cards []Card `json:"cards"`
+}
+
+type Card struct {
+	Content  string `json:"content"`
+	Position int    `json:"position"`
+}
+
+// LoadGame returns the Wordle game state for a given date.
+func LoadGame(date string) (ConnectionsModel, error) {
+	// Try loading the saved game from the database
+	model, err := LoadFromFile(date)
+	if err == nil {
+		return model, nil
+	}
+
+	// Initialize a new empty game state
+	model = ConnectionsModel{
+		date: date,
+	}
+	model.handleReset()
+
+	// Try fetching from the web if not in database
+	groups, fetchErr := fetchConnectionsGroups(date)
+	if fetchErr != nil {
+		return model, fetchErr
+	}
+
+	model.wordGroups = groups
+	return model, nil
+}
+
+func fetchConnectionsGroups(date string) ([4]WordGroup, error) {
+	url := fmt.Sprintf("https://www.nytimes.com/svc/connections/v2/%s.json", date)
+	var groups [4]WordGroup
+
+	// Make the GET request
+	resp, err := http.Get(url)
+	if err != nil {
+		return groups, fmt.Errorf("error fetching Connections game: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Check HTTP status
+	if resp.StatusCode != http.StatusOK {
+		return groups, fmt.Errorf("non-OK HTTP status: %d", resp.StatusCode)
+	}
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return groups, fmt.Errorf("error reading response body: %v", err)
+	}
+
+	// Decode JSON
+	var result ConnectionsResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return groups, fmt.Errorf("error decoding JSON: %v\nbody: %s", err, string(body))
+	}
+
+	for i, category := range result.Categories {
+		var members [4]string
+		for i, card := range category.Cards {
+			members[i] = card.Content
+		}
+
+		groups[i] = WordGroup{
+			Members:    members,
+			Clue:       category.Title,
+			Color:      i + 1,
+			IsRevealed: false,
+		}
+	}
+
+	return groups, nil
 }
 
 // SaveToFile persists the current connections game state to a SQLite database.
 func (m *ConnectionsModel) SaveToFile() error {
+	// Create the data directory if it doesn't exist
+	os.MkdirAll("data/connections", 0755)
+
 	// Open the database
 	db, err := sql.Open("sqlite3", filename)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"hash/maphash"
 	"math/rand"
 	"slices"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
@@ -32,12 +33,8 @@ type ConnectionsModel struct {
 
 // InitConnectionsModel initializes a new connections model.
 func InitConnectionsModel() *ConnectionsModel {
-	date, err := GetLatestDate()
-	if err != nil {
-		fmt.Println("Failed to get latest date:", err)
-	}
-
-	m, err := LoadFromFile(date)
+	today := time.Now().Format("2006-01-02")
+	m, err := LoadGame(today)
 	if err != nil {
 		fmt.Println("Failed to load connections:", err)
 	}
@@ -234,7 +231,6 @@ func (m *ConnectionsModel) handleReset() {
 	m.message = "Create four groups of four!"
 
 	m.initBoard()
-	m.SaveToFile()
 }
 
 // initBoard initializes the board with the revealed words at the top and the unrevealed words below.
