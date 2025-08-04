@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -83,6 +84,9 @@ func fetchWordleAnswer(date string) ([5]byte, error) {
 
 // SaveToFile writes the current game state to a SQLite database.
 func (m *WordleModel) SaveToFile() error {
+	// Create the data directory if it doesn't exist
+	os.MkdirAll("data/wordle", 0755)
+
 	// Open the database
 	db, err := sql.Open("sqlite3", filename)
 	if err != nil {
