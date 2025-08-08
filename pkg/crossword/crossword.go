@@ -2,6 +2,7 @@ package crossword
 
 import (
 	"fmt"
+	"time"
 	"unicode"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -18,12 +19,14 @@ type CrosswordModel struct {
 	date        string
 	acrossClues []string
 	downClues   []string
-	answer      [15][15]byte
-	grid        [15][15]byte
+	answer      [][]byte
+	grid        [][]byte
+	width       int
+	height      int
 
 	// Grid metadata
-	gridNums    [15][15]int
-	clueIndices [15][15]Position
+	gridNums    [][]int
+	clueIndices [][]Position
 
 	// Current state
 	clue           int
@@ -35,7 +38,7 @@ type CrosswordModel struct {
 	orthoAxis      *int
 
 	// Game state
-	incorrect    [15][15]bool
+	incorrect    [][]bool
 	correctCount int
 	filledCount  int
 	autoCheck    bool
@@ -45,12 +48,8 @@ type CrosswordModel struct {
 // InitCrosswordModel creates and initializes a new crossword model.
 // It loads puzzle data from file and sets up the initial game state.
 func InitCrosswordModel() *CrosswordModel {
-	date, err := GetLatestDate()
-	if err != nil {
-		fmt.Println("Failed to get latest date:", err)
-	}
-
-	m, err := LoadFromFile(date)
+	today := time.Now().Format("2006-01-02")
+	m, err := LoadGame(today)
 	if err != nil {
 		fmt.Println("Failed to load crossword:", err)
 	}
@@ -92,7 +91,11 @@ func (m *CrosswordModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.autoCheck {
 				m.handleCheckPuzzle() // Check all entries when enabling
 			} else {
-				m.incorrect = [15][15]bool{} // Clear incorrect markers when disabling
+				// Clear incorrect markers when disabling
+				m.incorrect = make([][]bool, m.height)
+				for i := range m.incorrect {
+					m.incorrect[i] = make([]bool, m.width)
+				}
 			}
 
 		// Navigation keys
@@ -132,9 +135,9 @@ func (m *CrosswordModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.handleMoveForward()
 			}
 
-		case " ":
+		case "space":
 			// Space advances to next cell if possible
-			if *m.movementAxis < 14 && m.cellAt(1) != '.' {
+			if *m.movementAxis < m.currentDimmension()-1 && m.cellAt(1) != '.' {
 				*m.movementAxis++
 			}
 
@@ -165,30 +168,36 @@ func (m *CrosswordModel) handleReset() {
 	m.filledCount = 0
 
 	// Clear the grid
+	m.grid = make([][]byte, m.height)
 	for i := range m.grid {
-		m.grid[i] = [15]byte{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+		for range m.width {
+			m.grid[i] = append(m.grid[i], ' ')
+		}
 	}
 
 	// Restore black cells and update counters
-	for i := range 225 {
-		row, col := i/15, i%15
+	for row := range m.height {
+		for col := range m.width {
+			// Preserve black cells from the answer grid
+			if m.answer[row][col] == '.' {
+				m.grid[row][col] = '.'
+			}
 
-		// Preserve black cells from the answer grid
-		if m.answer[row][col] == '.' {
-			m.grid[row][col] = '.'
-		}
-
-		// Update counters for filled and correct cells
-		if m.grid[row][col] == m.answer[row][col] {
-			m.correctCount++
-		}
-		if m.grid[row][col] != ' ' {
-			m.filledCount++
+			// Update counters for filled and correct cells
+			if m.grid[row][col] == m.answer[row][col] {
+				m.correctCount++
+			}
+			if m.grid[row][col] != ' ' {
+				m.filledCount++
+			}
 		}
 	}
 
 	// Clear incorrect markers
-	m.incorrect = [15][15]bool{}
+	m.incorrect = make([][]bool, m.height)
+	for i := range m.incorrect {
+		m.incorrect[i] = make([]bool, m.width)
+	}
 
 	// Save the reset state
 	m.SaveToFile()
@@ -219,7 +228,7 @@ func (m *CrosswordModel) handleCheckWord() {
 	}
 
 	// Check each letter in the word
-	for *m.movementAxis+offset < 15 && m.cellAt(offset) != '.' {
+	for *m.movementAxis+offset < m.currentDimmension() && m.cellAt(offset) != '.' {
 		x := m.cursor.X
 		y := m.cursor.Y
 
@@ -237,10 +246,10 @@ func (m *CrosswordModel) handleCheckWord() {
 
 // handleCheckPuzzle checks all letters in the entire puzzle.
 func (m *CrosswordModel) handleCheckPuzzle() {
-	for i := range 225 {
-		x := i % 15
-		y := i / 15
-		m.handleCheckLetter(x, y)
+	for row := range m.height {
+		for col := range m.width {
+			m.handleCheckLetter(col, row)
+		}
 	}
 }
 
@@ -248,12 +257,19 @@ func (m *CrosswordModel) handleCheckPuzzle() {
 func (m *CrosswordModel) incrementCursor() {
 	*m.movementAxis++
 
+	movementDimmension := m.height
+	orthoDimmension := m.width
+	if m.isAcross {
+		movementDimmension = m.width
+		orthoDimmension = m.height
+	}
+
 	// If we've reached the end of the grid, wrap around
-	if *m.movementAxis > 14 {
+	if *m.movementAxis > movementDimmension-1 {
 		*m.movementAxis = 0
 
 		// If we've reached the end of the puzzle, wrap around
-		if *m.orthoAxis >= 14 {
+		if *m.orthoAxis >= orthoDimmension-1 {
 			*m.orthoAxis = 0
 		} else {
 			*m.orthoAxis++
@@ -265,13 +281,20 @@ func (m *CrosswordModel) incrementCursor() {
 func (m *CrosswordModel) decrementCursor() {
 	*m.movementAxis--
 
+	movementDimmension := m.height
+	orthoDimmension := m.width
+	if m.isAcross {
+		movementDimmension = m.width
+		orthoDimmension = m.height
+	}
+
 	// If we've reached the start of the grid, wrap around
 	if *m.movementAxis < 0 {
-		*m.movementAxis = 14
+		*m.movementAxis = movementDimmension - 1
 
 		// If we've reached the start of the puzzle, wrap around
 		if *m.orthoAxis <= 0 {
-			*m.orthoAxis = 14
+			*m.orthoAxis = orthoDimmension - 1
 		} else {
 			*m.orthoAxis--
 		}
@@ -315,7 +338,7 @@ func (m *CrosswordModel) handleNextWord() {
 	}
 
 	// If the puzzle is complete, don't try to find empty cells
-	if m.filledCount == 225 {
+	if m.filledCount == m.width*m.height {
 		return
 	}
 
@@ -324,7 +347,7 @@ func (m *CrosswordModel) handleNextWord() {
 		*m.movementAxis++
 
 		// If we hit the end of the word or a black cell, move to the next word
-		if *m.movementAxis >= 15 || m.grid[m.cursor.Y][m.cursor.X] == '.' {
+		if *m.movementAxis >= m.currentDimmension() || m.grid[m.cursor.Y][m.cursor.X] == '.' {
 			*m.movementAxis--
 			m.handleNextWord() // Recursively find the next word
 			break
@@ -354,7 +377,7 @@ func (m *CrosswordModel) handlePrevWord() {
 	}
 
 	// If the puzzle is complete, don't try to find empty cells
-	if m.filledCount == 225 {
+	if m.filledCount == m.width*m.height {
 		return
 	}
 
@@ -363,7 +386,7 @@ func (m *CrosswordModel) handlePrevWord() {
 		*m.movementAxis++
 
 		// If we hit the end of the word or a black cell, move to the previous word
-		if *m.movementAxis >= 15 || m.grid[m.cursor.Y][m.cursor.X] == '.' {
+		if *m.movementAxis >= m.currentDimmension() || m.grid[m.cursor.Y][m.cursor.X] == '.' {
 			*m.movementAxis--
 			m.handlePrevWord() // Recursively find the previous word
 			break
@@ -397,12 +420,8 @@ func (m *CrosswordModel) handleDelete() {
 	m.grid[m.cursor.Y][m.cursor.X] = ' '
 	m.incorrect[m.cursor.Y][m.cursor.X] = false
 
-	// Get the clue indices for this cell
-	acrossClue := m.clueIndices[m.cursor.Y][m.cursor.X].X
-	downClue := m.clueIndices[m.cursor.Y][m.cursor.X].Y
-
 	// Update the solved status for affected clues
-	m.isAcrossSolved[acrossClue], m.isDownSolved[downClue] = m.isClueSolved()
+	m.updateClueStatus()
 }
 
 // handleInput processes letter input from the keyboard.
@@ -430,12 +449,8 @@ func (m *CrosswordModel) handleInput(msg tea.KeyMsg) {
 	m.grid[m.cursor.Y][m.cursor.X] = byte(input)
 	m.incorrect[m.cursor.Y][m.cursor.X] = false
 
-	// Get the clue indices for this cell
-	acrossClue := m.clueIndices[m.cursor.Y][m.cursor.X].X
-	downClue := m.clueIndices[m.cursor.Y][m.cursor.X].Y
-
 	// Update the solved status for affected clues
-	m.isAcrossSolved[acrossClue], m.isDownSolved[downClue] = m.isClueSolved()
+	m.updateClueStatus()
 
 	// Update counters
 	m.filledCount++
@@ -447,18 +462,18 @@ func (m *CrosswordModel) handleInput(msg tea.KeyMsg) {
 	}
 
 	// Check for win condition
-	if m.correctCount == 225 {
+	if m.correctCount == m.width*m.height {
 		m.message = "🎉 Congratulations! You solved the crossword! 🎉"
 	}
 
 	// Advance cursor if possible
-	if *m.movementAxis < 14 && m.cellAt(1) != '.' {
+	if *m.movementAxis < m.currentDimmension()-1 && m.cellAt(1) != '.' {
 		*m.movementAxis++
 	}
 }
 
-// isClueSolved checks if the across and down clues at the current position are solved.
-func (m *CrosswordModel) isClueSolved() (bool, bool) {
+// updateClueStatus updates the solved status of across and or down clues at the cursor.
+func (m *CrosswordModel) updateClueStatus() {
 	// Start at the current position
 	x := m.cursor.X
 	y := m.cursor.Y
@@ -476,7 +491,7 @@ func (m *CrosswordModel) isClueSolved() (bool, bool) {
 	}
 
 	// Check if the across word is completely filled
-	for x < 15 && m.grid[m.cursor.Y][x] != '.' {
+	for x < m.width && m.grid[m.cursor.Y][x] != '.' {
 		if m.grid[m.cursor.Y][x] == ' ' {
 			isAcrossSolved = false
 			break
@@ -485,7 +500,7 @@ func (m *CrosswordModel) isClueSolved() (bool, bool) {
 	}
 
 	// Check if the down word is completely filled
-	for y < 15 && m.grid[y][m.cursor.X] != '.' {
+	for y < m.height && m.grid[y][m.cursor.X] != '.' {
 		if m.grid[y][m.cursor.X] == ' ' {
 			isDownSolved = false
 			break
@@ -493,7 +508,17 @@ func (m *CrosswordModel) isClueSolved() (bool, bool) {
 		y++
 	}
 
-	return isAcrossSolved, isDownSolved
+	// Get the clue indices for this cell
+	acrossClue := m.clueIndices[m.cursor.Y][m.cursor.X].X
+	downClue := m.clueIndices[m.cursor.Y][m.cursor.X].Y
+
+	// Set the solved status for affected clues
+	if acrossClue != -1 {
+		m.isAcrossSolved[acrossClue] = isAcrossSolved
+	}
+	if downClue != -1 {
+		m.isDownSolved[downClue] = isDownSolved
+	}
 }
 
 // switchAxis changes the current movement direction.
@@ -519,4 +544,13 @@ func (m *CrosswordModel) clueAt(x, y int) int {
 		return m.clueIndices[y][x].X
 	}
 	return m.clueIndices[y][x].Y
+}
+
+// currentDimmension returns the current dimension of the puzzle.
+func (m *CrosswordModel) currentDimmension() int {
+	if m.isAcross {
+		return m.width
+	} else {
+		return m.height
+	}
 }

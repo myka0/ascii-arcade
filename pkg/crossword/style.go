@@ -7,7 +7,7 @@ import (
 
 const (
 	Padding       = 2
-	ClueWidth     = 32
+	ClueWidth     = 36
 	FullClueWidth = ClueWidth + Padding
 )
 

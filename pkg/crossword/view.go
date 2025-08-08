@@ -10,7 +10,7 @@ import (
 
 // View renders the complete crossword puzzle UI.
 func (m CrosswordModel) View() string {
-	var rows [16]string
+	rows := make([]string, m.height+1)
 
 	// First row is special - it has the top margin
 	rows[0] = lipgloss.JoinVertical(
@@ -29,7 +29,7 @@ func (m CrosswordModel) View() string {
 	}
 
 	// Last row is the bottom margin
-	rows[15] = m.viewMargin(14, "▀▀▀▀▀")
+	rows[m.height] = m.viewMargin(m.height-1, "▀▀▀▀▀")
 
 	// Combine all elements vertically
 	return lipgloss.JoinVertical(
@@ -57,6 +57,10 @@ func (m CrosswordModel) viewCluesBox() string {
 
 	// Get the down clue index for the current cursor position
 	clueStartIdx = m.clueIndices[m.cursor.Y][m.cursor.X].Y
+	if clueStartIdx <= -1 {
+		clueStartIdx = 0
+	}
+
 	viewClues(m.downClues, clues[:], m.isDownSolved, clueStartIdx, false)
 
 	// Create the header for the clues box
@@ -157,13 +161,13 @@ func viewSurroundingClues(clues []string, isSolved []bool, clueStartIdx, offset,
 
 // viewMargin renders the top or bottom margin of a row in the grid.
 func (m CrosswordModel) viewMargin(y int, cell string) string {
-	var top [15]string
+	top := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
 		isIncorrect := m.incorrect[y][x]
 		isCursor := x == m.cursor.X && y == m.cursor.Y
 		isAcross := m.clue == m.clueAt(x, y) && m.isAcross
-		isDown := m.clue == m.clueAt(x, y) && !m.isAcross
+		isDown := m.clue == m.clueAt(x, y) && !m.isAcross && m.clueIndices[y][x].Y != -1
 		isEmpty := char == '.'
 
 		// Apply appropriate styling based on cell state
@@ -188,13 +192,13 @@ func (m CrosswordModel) viewMargin(y int, cell string) string {
 
 // viewGridRow renders a row of cells in the crossword grid.
 func (m CrosswordModel) viewGridRow(y int) string {
-	var cells [15]string
+	cells := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
 		isIncorrect := m.incorrect[y][x]
 		isCursor := x == m.cursor.X && y == m.cursor.Y
 		isAcross := m.clue == m.clueAt(x, y) && m.isAcross
-		isDown := m.clue == m.clueAt(x, y) && !m.isAcross
+		isDown := m.clue == m.clueAt(x, y) && !m.isAcross && m.clueIndices[y][x].Y != -1
 		isEmpty := char == '.'
 
 		// Get the grid number for this cell
@@ -228,7 +232,7 @@ func (m CrosswordModel) viewGridRow(y int) string {
 
 // viewTopRow renders the connecting row between two grid rows.
 func (m CrosswordModel) viewTopRow(y int) string {
-	var top [15]string
+	top := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
 
@@ -241,8 +245,8 @@ func (m CrosswordModel) viewTopRow(y int) string {
 		isAcross := m.clue == m.clueAt(x, y) && m.isAcross
 		isAcrossAbove := m.clue == m.clueAt(x, y-1) && m.isAcross
 
-		isDown := m.clue == m.clueAt(x, y) && !m.isAcross
-		isDownAbove := m.clue == m.clueAt(x, y-1) && !m.isAcross
+		isDown := m.clue == m.clueAt(x, y) && !m.isAcross && m.clueIndices[y][x].Y != -1
+		isDownAbove := m.clue == m.clueAt(x, y-1) && !m.isAcross && m.clueIndices[y-1][x].Y != -1
 
 		isEmpty := char == '.'
 		isEmptyAbove := m.grid[y-1][x] == '.'
@@ -358,6 +362,12 @@ func (m CrosswordModel) viewGridNum(x, y int) string {
 	// Add padding for single digit numbers
 	if len(numStr) == 1 {
 		return result + " "
+	}
+
+	// TODO Handle 3 digit numbers properly
+	if len(numStr) == 3 {
+		runes := []rune(result)
+		return string(runes[len(runes)-2:])
 	}
 
 	return result
