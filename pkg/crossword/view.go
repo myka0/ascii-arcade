@@ -74,52 +74,50 @@ func (m CrosswordModel) viewCluesBox() string {
 
 // viewClues renders a set of clues into the provided slice.
 // It places the current clue in the middle and surrounding clues above and below.
-func viewClues(clues, viewClues []string, isSolved []bool, clueStartIdx int, isAcross bool) {
+func viewClues(clues, viewClues []string, isSolved []bool, startIdx int, isAcross bool) {
 	// Select the appropriate style based on clue direction
 	currentClueStyle := AcrossClue
 	if !isAcross {
 		currentClueStyle = DownClue
 	}
 
-	clue := clues[clueStartIdx]
-	offset := 0
+	// Wrap the current clue
+	lines := splitClue(clues[startIdx])
+	n := len(lines)
 
-	// Handle long clues by splitting them across two lines
-	if len(clue) > ClueWidth {
-		lastSpaceIndex := strings.LastIndex(clue[:ClueWidth], " ")
-		indent := strings.Index(clue, " ") + 1
-		offset = 1
+	// Where to place the first line of the current clue so it’s visually centered:
+	topOffset, bottomOffset := n/2, (n-1)/2
+	startRow := 6 - topOffset
 
-		// Split the current clue across two lines
-		viewClues[5] += currentClueStyle.Render(clue[:lastSpaceIndex])
-		viewClues[6] += currentClueStyle.Render(strings.Repeat(" ", indent) + clue[lastSpaceIndex+1:])
-	} else {
-		// Current clue fits on one line
-		viewClues[6] += currentClueStyle.Render(clues[clueStartIdx])
+	// Render current clue lines
+	for i, line := range lines {
+		viewClues[startRow+i] += currentClueStyle.Render(line)
 	}
 
 	// Add clues that come before the current clue
-	cluesBefore := viewSurroundingClues(clues, isSolved, clueStartIdx, offset, -1)
+	topSlots := 6 - topOffset
+	cluesBefore := viewSurroundingClues(clues, isSolved, startIdx, -1, topSlots)
 	for i, clue := range cluesBefore {
-		viewClues[5-i-offset] += clue
+		viewClues[startRow-1-i] += clue
 	}
 
 	// Add clues that come after the current clue
-	cluesAfter := viewSurroundingClues(clues, isSolved, clueStartIdx, 0, 1)
+	bottomSlots := 6 - bottomOffset
+	cluesAfter := viewSurroundingClues(clues, isSolved, startIdx, +1, bottomSlots)
 	for i, clue := range cluesAfter {
-		viewClues[i+7] += clue
+		viewClues[startRow+n+i] += clue
 	}
 }
 
-// viewSurroundingClues generates a list of rendered clues surrounding the current clue.
-func viewSurroundingClues(clues []string, isSolved []bool, clueStartIdx, offset, direction int) []string {
-	var viewClues []string
+// viewSurroundingClues returns up to maxLines of rendered clue lines in the given direction
+// relative to startIdx. For direction -1 (above) the lines are ordered nearest-first topward.
+// For +1 (below) it’s nearest-first downward.
+func viewSurroundingClues(clues []string, isSolved []bool, startIdx, direction, maxLines int) []string {
+	viewClues := make([]string, 0, maxLines)
 
-	// Add up to 6 clues in the specified direction
-	for i := 1; i+offset <= 6; i++ {
+	for step := 1; len(viewClues) < maxLines; step++ {
 		// Calculate the index with wrapping
-		wrappedIdx := (clueStartIdx + direction*i + len(clues)) % len(clues)
-		clue := clues[wrappedIdx]
+		wrappedIdx := (startIdx + direction*step + len(clues)) % len(clues)
 
 		// Choose style based on whether the clue is solved
 		style := NormalClue
@@ -127,36 +125,50 @@ func viewSurroundingClues(clues []string, isSolved []bool, clueStartIdx, offset,
 			style = SolvedClue
 		}
 
-		// Handle long clues by splitting them
-		if len(clue) > ClueWidth {
-			splitIdx := strings.LastIndex(clue[:ClueWidth], " ")
-			indent := strings.Index(clue, " ") + 1
+		lines := splitClue(clues[wrappedIdx])
 
-			// If this is the last available line, truncate and exit
-			if i+offset >= 6 {
-				viewClues = append(viewClues, style.Render(clue[:splitIdx]))
-				return viewClues
+		if direction == -1 {
+			// For clues above, reverse and prepend
+			for i := len(lines) - 1; i >= 0 && len(viewClues) < maxLines; i-- {
+				viewClues = append(viewClues, style.Render(lines[i]))
 			}
-
-			firstLine := style.Render(clue[:splitIdx])
-			secondLine := style.Render(strings.Repeat(" ", indent) + clue[splitIdx+1:])
-
-			// Handle split clues differently based on direction
-			if direction == -1 {
-				// For clues above, add the continuation line first, then the start
-				viewClues = append(viewClues, secondLine, firstLine)
-			} else {
-				// For clues below, add the start line first, then the continuation
-				viewClues = append(viewClues, firstLine, secondLine)
-			}
-			offset++ // Account for the extra line used
 		} else {
-			// Clue fits on one line
-			viewClues = append(viewClues, style.Render(clue))
+			// For clues below, append in order
+			for i := 0; i < len(lines) && len(viewClues) < maxLines; i++ {
+				viewClues = append(viewClues, style.Render(lines[i]))
+			}
 		}
 	}
 
 	return viewClues
+}
+
+// splitClue wraps a clue into lines of at most ClueWidth characters.
+func splitClue(clue string) []string {
+	var lines []string
+	remaining := clue
+	indent := strings.Repeat(" ", strings.Index(clue, " ")+1)
+
+	// Split the clue into lines
+	for idx := 0; len(remaining) > 0; idx++ {
+		// Add indentation if this is not the first line
+		if idx > 0 {
+			remaining = indent + remaining
+		}
+
+		// If the remaining clue is less than the maximum width, add it entirely and break
+		if len(remaining) < ClueWidth {
+			lines = append(lines, remaining)
+			break
+		}
+
+		// Otherwise, find the last space in the remaining clue and split there
+		splitIdx := strings.LastIndex(remaining[:ClueWidth], " ")
+		lines = append(lines, remaining[:splitIdx])
+		remaining = remaining[splitIdx+1:]
+	}
+
+	return lines
 }
 
 // viewMargin renders the top or bottom margin of a row in the grid.
