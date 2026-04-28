@@ -5,12 +5,13 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 // View renders the connections game board.
-func (m ConnectionsModel) View() string {
+func (m ConnectionsModel) View() tea.View {
 	// Render the board rows
 	var rows [4]string
 	for i := range 4 {
@@ -24,12 +25,14 @@ func (m ConnectionsModel) View() string {
 
 	// Combine all elements vertically
 	board := lipgloss.JoinVertical(lipgloss.Center, rows[:]...)
-	return lipgloss.JoinVertical(
-		lipgloss.Center,
-		FGLightText.Render(m.message)+"\n",
-		board,
-		m.viewMistakesRemaining(),
-		viewButtonRow(),
+	return tea.NewView(
+		lipgloss.JoinVertical(
+			lipgloss.Center,
+			FGLightText.Render(m.message)+"\n",
+			board,
+			m.viewMistakesRemaining(),
+			viewButtonRow(),
+		),
 	)
 }
 

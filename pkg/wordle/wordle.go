@@ -5,7 +5,7 @@ import (
 	"time"
 	"unicode"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Possible states for each key on the keyboard.
@@ -47,7 +47,7 @@ func (m WordleModel) Init() tea.Cmd {
 // Update handles keypress events and updates the model state accordingly.
 func (m *WordleModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+r":
 			m.handleReset()
@@ -131,7 +131,7 @@ func (m *WordleModel) handleSubmit() {
 }
 
 // handleInput processes a letter key input.
-func (m *WordleModel) handleInput(msg tea.KeyMsg) {
+func (m *WordleModel) handleInput(msg tea.KeyPressMsg) {
 	// Ensure the input is a single character and that we are within bounds
 	if len(msg.String()) != 1 || m.cursorX >= 5 || m.cursorY >= 6 {
 		return

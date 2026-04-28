@@ -10,7 +10,8 @@ import (
 
 	"image/color"
 
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -26,14 +27,14 @@ const (
 )
 
 // View renders the entire Chess board.
-func (m CheckersModel) View() string {
+func (m CheckersModel) View() tea.View {
 	renderer := m.getPieceRenderer(m.renderer)
 
 	if m.gameOver {
-		return m.viewGameOver(renderer)
+		return tea.NewView(m.viewGameOver(renderer))
 	}
 
-	return renderer.View()
+	return tea.NewView(renderer.View())
 }
 
 // viewGameOver renders the end of game UI.

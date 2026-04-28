@@ -5,7 +5,7 @@ import (
 	"time"
 	"unicode"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Position represents a 2D coordinate in the crossword grid.
@@ -69,7 +69,7 @@ func (m CrosswordModel) Init() tea.Cmd {
 // Update handles keypress events and updates the model state accordingly.
 func (m *CrosswordModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle keyboard input
 		switch msg.String() {
 		// Game control keys
@@ -425,7 +425,7 @@ func (m *CrosswordModel) handleDelete() {
 }
 
 // handleInput processes letter input from the keyboard.
-func (m *CrosswordModel) handleInput(msg tea.KeyMsg) {
+func (m *CrosswordModel) handleInput(msg tea.KeyPressMsg) {
 	// Only process single character inputs
 	if len(msg.String()) != 1 {
 		return

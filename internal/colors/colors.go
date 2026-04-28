@@ -1,7 +1,7 @@
 package colors
 
 import (
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var (

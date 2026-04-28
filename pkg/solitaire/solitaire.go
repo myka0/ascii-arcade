@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -77,7 +77,7 @@ func (m SolitaireModel) Init() tea.Cmd {
 func (m *SolitaireModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// Handle keyboard input
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+r":
 			return InitSolitaireModel(), nil
@@ -373,7 +373,7 @@ func (m *SolitaireModel) addTableauMove(from, to *Deck, flip bool, cards ...*Car
 }
 
 // View renders the entire Solitaire board.
-func (m SolitaireModel) View() string {
+func (m SolitaireModel) View() tea.View {
 	// Render top row: Stock, Waste, and Foundations
 	topRow := lipgloss.JoinHorizontal(
 		lipgloss.Top,
@@ -401,10 +401,12 @@ func (m SolitaireModel) View() string {
 	}
 	bottomRow := lipgloss.JoinHorizontal(lipgloss.Top, tableauViews...)
 
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		topRow,
-		middleRow,
-		bottomRow,
+	return tea.NewView(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			topRow,
+			middleRow,
+			bottomRow,
+		),
 	)
 }

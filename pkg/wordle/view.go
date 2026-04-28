@@ -1,12 +1,14 @@
 package wordle
 
 import (
+	"charm.land/lipgloss/v2"
 	"fmt"
-	"github.com/charmbracelet/lipgloss/v2"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 // View renders the entire game UI.
-func (m WordleModel) View() string {
+func (m WordleModel) View() tea.View {
 	// Generate each row of the Wordle grid
 	var rows [6]string
 	for y := range m.guesses {
@@ -22,7 +24,7 @@ func (m WordleModel) View() string {
 		"\n"+m.message+"\n",
 	)
 
-	return FGText.Render(output)
+	return tea.NewView(FGText.Render(output))
 }
 
 // viewGridRow renders a single row of the Wordle grid based on its position.

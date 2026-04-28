@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/lipgloss/v2"
 	charmansi "github.com/charmbracelet/x/ansi"
 	"github.com/muesli/reflow/ansi"
 )

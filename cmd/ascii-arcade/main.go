@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -60,7 +60,7 @@ type Saver interface {
 
 // ViewModel defines a view model that can render itself.
 type ViewModel interface {
-	View() string
+	View() tea.View
 	Help() string
 }
 
@@ -104,7 +104,7 @@ func (m model) Init() tea.Cmd {
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Global key bindings
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			m.handleSaveGame()
@@ -130,24 +130,21 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// If the help is selected use the help key bindings
 	if m.isHelpSelected {
 		switch msg := msg.(type) {
-		case tea.KeyMsg:
+		case tea.KeyPressMsg:
 			switch msg.String() {
 			case "enter":
 				m.isHelpSelected = false
 				return m, nil
 			}
 
-		case tea.MouseMsg:
-			switch msg := msg.(type) {
-			case tea.MouseClickMsg:
-				if msg.Mouse().Button != tea.MouseLeft {
-					return m, nil
-				}
+		case tea.MouseClickMsg:
+			if msg.Mouse().Button != tea.MouseLeft {
+				return m, nil
+			}
 
-				if zone.Get("continue").InBounds(msg) {
-					m.isHelpSelected = false
-					return m, nil
-				}
+			if zone.Get("continue").InBounds(msg) {
+				m.isHelpSelected = false
+				return m, nil
 			}
 		}
 
@@ -174,7 +171,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // handleHomeMenuInput handles keypress events for the home menu.
 func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "down":
 			m.message = ""
@@ -297,19 +294,12 @@ func handleSearch(query string) []string {
 
 // Entry point of the application.
 func main() {
-	noMouse := flag.Bool("no-mouse", false, "Run without mouse support")
 	startGame := flag.String("game", "", "Start with a specific game")
 	flag.Parse()
 
 	zone.NewGlobal()
 
-	var opts []tea.ProgramOption
-	if !*noMouse {
-		opts = append(opts, tea.WithAltScreen())
-		opts = append(opts, tea.WithMouseCellMotion())
-	}
-
-	p := tea.NewProgram(initialModel(*startGame), opts...)
+	p := tea.NewProgram(initialModel(*startGame))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

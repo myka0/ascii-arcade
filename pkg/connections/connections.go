@@ -7,7 +7,7 @@ import (
 	"slices"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -53,7 +53,7 @@ func (m ConnectionsModel) Init() tea.Cmd {
 func (m *ConnectionsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// Handle keyboard input
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+s":
 			m.handleShuffle()

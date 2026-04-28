@@ -3,7 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -23,7 +24,7 @@ var implementedGames = map[string]bool{
 }
 
 // View renders the full UI centered in the terminal.
-func (m model) View() string {
+func (m model) View() tea.View {
 	var view string
 	switch {
 	case m.isHelpSelected:
@@ -31,7 +32,7 @@ func (m model) View() string {
 		view = m.activeModel.(ViewModel).Help()
 	case m.isGameSelected:
 		// If a game is selected, render the game UI
-		view = m.activeModel.(ViewModel).View()
+		view = m.activeModel.(ViewModel).View().Content
 	default:
 		// Render the home menu
 		keyBindings := lipgloss.NewStyle().MarginLeft(8).Render(m.viewKeyBindings())
@@ -48,9 +49,14 @@ func (m model) View() string {
 		)
 	}
 
-	return zone.Scan(
-		lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, view),
+	v := tea.NewView(
+		zone.Scan(
+			lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, view),
+		),
 	)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 // viewGameList returns the rendered list of game titles.

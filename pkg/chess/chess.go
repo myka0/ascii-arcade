@@ -6,7 +6,7 @@ import (
 
 	t "ascii-arcade/pkg/chess/types"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
@@ -138,7 +138,7 @@ func (m ChessModel) Init() tea.Cmd {
 func (m *ChessModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// Handle keyboard input
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+r":
 			return InitChessModel(), nil
@@ -148,11 +148,8 @@ func (m *ChessModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	// Handle mouse input
-	case tea.MouseMsg:
-		switch msg := msg.(type) {
-		case tea.MouseClickMsg:
-			return m.handleMouseClick(msg)
-		}
+	case tea.MouseClickMsg:
+		return m.handleMouseClick(msg)
 	}
 
 	return m, nil

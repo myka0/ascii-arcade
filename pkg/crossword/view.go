@@ -5,11 +5,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // View renders the complete crossword puzzle UI.
-func (m CrosswordModel) View() string {
+func (m CrosswordModel) View() tea.View {
 	rows := make([]string, m.height+1)
 
 	// First row is special - it has the top margin
@@ -32,11 +33,13 @@ func (m CrosswordModel) View() string {
 	rows[m.height] = m.viewMargin(m.height-1, "▀▀▀▀▀")
 
 	// Combine all elements vertically
-	return lipgloss.JoinVertical(
-		lipgloss.Center,
-		lipgloss.JoinVertical(lipgloss.Center, rows[:]...),
-		m.viewCluesBox(),
-		m.message,
+	return tea.NewView(
+		lipgloss.JoinVertical(
+			lipgloss.Center,
+			lipgloss.JoinVertical(lipgloss.Center, rows[:]...),
+			m.viewCluesBox(),
+			m.message,
+		),
 	)
 }
 
