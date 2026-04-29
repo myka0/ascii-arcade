@@ -13,7 +13,7 @@ go build ./cmd/ascii-arcade
 ./ascii-arcade
 ```
 
-> Requires **Go 1.24+**
+> Requires **Go 1.25+**
 
 ## Usage
 
