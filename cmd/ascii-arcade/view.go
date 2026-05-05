@@ -17,7 +17,7 @@ var implementedGames = map[string]bool{
 	"Wordle":       true,
 	"Connections":  true,
 	"Sudoku":       false,
-	"Go":           false,
+	"Go":           true,
 	"Chess":        true,
 	"Checkers":     true,
 	"Connect Four": false,

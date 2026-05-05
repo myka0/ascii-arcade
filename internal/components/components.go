@@ -64,6 +64,35 @@ func ViewKeybinds(title string, keybinds []Keybind) string {
 	)
 }
 
+// ViewWideKeybinds displays a list of keybindings under a title, formatted into a single column.
+func ViewWideKeybinds(title string, keybinds []Keybind) string {
+	var keys []string
+	var actions []string
+
+	// Format each keybind
+	for _, keybind := range keybinds {
+		keys = append(keys, KeyStyle.Render(keybind.Key))
+		actions = append(actions, KeyActionStyle.Render(keybind.Action))
+	}
+
+	left := strings.Join(keys, "\n")
+	right := strings.Join(actions, "\n")
+
+	// Render left and right columns side by side
+	menu := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		KeyBindBox.Align(lipgloss.Left).Render(left),
+		KeyBindBox.Align(lipgloss.Right).Render(right),
+	)
+
+	// Combine header and keybinds
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		Header.Render(title),
+		KeyBindMenu.Render(menu),
+	)
+}
+
 // JoinKeybinds joins two keybind menus side by side.
 func JoinKeybinds(left, right string) string {
 	// Estimate visual height of each block

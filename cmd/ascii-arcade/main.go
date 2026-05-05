@@ -5,6 +5,7 @@ import (
 	"ascii-arcade/pkg/chess"
 	"ascii-arcade/pkg/connections"
 	"ascii-arcade/pkg/crossword"
+	"ascii-arcade/pkg/gogame"
 	"ascii-arcade/pkg/solitaire"
 	"ascii-arcade/pkg/wordle"
 
@@ -238,6 +239,8 @@ func (m *model) handleSwitchModel() tea.Model {
 		m.activeModel = checkers.InitCheckersModel()
 	case "Chess":
 		m.activeModel = chess.InitChessModel()
+	case "Go":
+		m.activeModel = gogame.InitGoModel()
 	default:
 		return m
 	}

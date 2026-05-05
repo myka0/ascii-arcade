@@ -9,6 +9,7 @@ var (
 	Pink    = lipgloss.Color("#F25D94")
 	Blue    = lipgloss.Color("#579BF4")
 	Yellow  = lipgloss.Color("#F4B357")
+	Tan     = lipgloss.Color("#DAAF6A")
 	Orange  = lipgloss.Color("#F47757")
 	Red     = lipgloss.Color("#F44747")
 	Light1  = lipgloss.Color("#D4D4D4")
