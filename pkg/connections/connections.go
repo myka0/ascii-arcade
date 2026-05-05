@@ -2,8 +2,7 @@ package connections
 
 import (
 	"fmt"
-	"hash/maphash"
-	"math/rand"
+	"math/rand/v2"
 	"slices"
 	"time"
 
@@ -135,9 +134,8 @@ func (m *ConnectionsModel) handleShuffle() {
 		}
 	}
 
-	// Use the maphash package to generate a random seed
-	generator := rand.New(rand.NewSource(int64(new(maphash.Hash).Sum64())))
-	generator.Shuffle(len(m.board), func(i, j int) {
+	// Shuffle the board randomly
+	rand.Shuffle(len(m.board), func(i, j int) {
 		// Don't shuffle revealed words
 		if revealedSet[m.board[i]] || revealedSet[m.board[j]] {
 			return

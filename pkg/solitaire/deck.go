@@ -1,8 +1,7 @@
 package solitaire
 
 import (
-	"hash/maphash"
-	"math/rand"
+	"math/rand/v2"
 	"slices"
 )
 
@@ -91,9 +90,7 @@ func (d *Deck) Expand() {
 
 // Shuffle shuffles the deck.
 func (d Deck) Shuffle() {
-	// Use the maphash package to generate a random seed
-	generator := rand.New(rand.NewSource(int64(new(maphash.Hash).Sum64())))
-	generator.Shuffle(d.Size(), func(i, j int) {
+	rand.Shuffle(d.Size(), func(i, j int) {
 		d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i]
 	})
 }
