@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -71,10 +72,10 @@ func fetchCrosswordGame(date string) (CrosswordModel, error) {
 	// Make the GET request
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("X-Games-Auth-Bypass", "true")
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return model, fmt.Errorf("error fetching Connections game: %v", err)
+		return model, fmt.Errorf("error fetching Crossword game: %v", err)
 	}
 	defer resp.Body.Close()
 

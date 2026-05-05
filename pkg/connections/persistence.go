@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -61,7 +62,8 @@ func fetchConnectionsGroups(date string) ([4]WordGroup, error) {
 	var groups [4]WordGroup
 
 	// Make the GET request
-	resp, err := http.Get(url)
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(url)
 	if err != nil {
 		return groups, fmt.Errorf("error fetching Connections game: %v", err)
 	}

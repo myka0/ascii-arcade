@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -55,7 +56,8 @@ func fetchWordleAnswer(date string) ([5]byte, error) {
 	url := fmt.Sprintf("https://www.nytimes.com/svc/wordle/v2/%s.json", date)
 
 	// Make the GET request
-	resp, err := http.Get(url)
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(url)
 	if err != nil {
 		return answer, fmt.Errorf("error fetching Wordle answer: %v", err)
 	}
