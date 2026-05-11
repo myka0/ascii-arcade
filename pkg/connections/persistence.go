@@ -7,9 +7,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 const filename = "data/connections/games.db"
@@ -105,28 +106,9 @@ func fetchConnectionsGroups(date string) ([4]WordGroup, error) {
 
 // SaveToFile persists the current connections game state to a SQLite database.
 func (m *ConnectionsModel) SaveToFile() error {
-	// Create the data directory if it doesn't exist
-	os.MkdirAll("data/connections", 0755)
-
-	// Open the database
-	db, err := sql.Open("sqlite3", filename)
+	db, err := getDB()
 	if err != nil {
-		return fmt.Errorf("error opening database: %v", err)
-	}
-	defer db.Close()
-
-	// Create table if it doesn't exist
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS connections (
-			date TEXT PRIMARY KEY,
-			word_groups TEXT,
-			guess_history TEXT,
-			revealed_word_groups TEXT,
-			mistakes_remaining INTEGER
-		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating table: %v", err)
+		return err
 	}
 
 	// Convert slices to JSON
@@ -147,12 +129,10 @@ func (m *ConnectionsModel) SaveToFile() error {
 func LoadFromFile(date string) (ConnectionsModel, error) {
 	model := ConnectionsModel{}
 
-	// Open the database
-	db, err := sql.Open("sqlite3", filename)
+	db, err := getDB()
 	if err != nil {
-		return model, fmt.Errorf("error opening database: %v", err)
+		return model, err
 	}
-	defer db.Close()
 
 	// Get the saved game data from the database
 	row := db.QueryRow(`SELECT word_groups, guess_history, revealed_word_groups, mistakes_remaining FROM connections WHERE date = ?`, date)
@@ -178,4 +158,43 @@ func LoadFromFile(date string) (ConnectionsModel, error) {
 	model.mistakesRemaining = mistakesRemaining
 
 	return model, nil
+}
+
+var (
+	dbOnce sync.Once
+	dbConn *sql.DB
+	dbErr  error
+)
+
+// getDB returns the shared *sql.DB connection pool, initializing it once.
+func getDB() (*sql.DB, error) {
+	dbOnce.Do(func() {
+		if err := os.MkdirAll("data/connections", 0755); err != nil {
+			dbErr = fmt.Errorf("error creating data dir: %v", err)
+			return
+		}
+
+		db, err := sql.Open("sqlite", filename)
+		if err != nil {
+			dbErr = fmt.Errorf("error opening database: %v", err)
+			return
+		}
+
+		if _, err := db.Exec(`
+			CREATE TABLE IF NOT EXISTS connections (
+				date TEXT PRIMARY KEY,
+				word_groups TEXT,
+				guess_history TEXT,
+				revealed_word_groups TEXT,
+				mistakes_remaining INTEGER
+			)
+		`); err != nil {
+			db.Close()
+			dbErr = fmt.Errorf("error creating table: %v", err)
+			return
+		}
+
+		dbConn = db
+	})
+	return dbConn, dbErr
 }

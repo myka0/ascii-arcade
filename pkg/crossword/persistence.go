@@ -8,9 +8,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 const filename = "data/crossword/games.db"
@@ -177,31 +178,9 @@ func fetchCrosswordGame(date string) (CrosswordModel, error) {
 
 // SaveToFile persists the current crossword puzzle state to a SQLite database.
 func (m *CrosswordModel) SaveToFile() error {
-	// Create the data directory if it doesn't exist
-	os.MkdirAll("data/crossword", 0755)
-
-	// Open the database
-	db, err := sql.Open("sqlite3", filename)
+	db, err := getDB()
 	if err != nil {
-		return fmt.Errorf("error opening database: %v", err)
-	}
-	defer db.Close()
-
-	// Create table if it doesn't exist
-	createTableQuery := `
-	CREATE TABLE IF NOT EXISTS crosswords (
-		date TEXT PRIMARY KEY,
-		across TEXT,
-		down TEXT,
-		answer TEXT,
-		grid TEXT,
-		grid_nums TEXT,
-		clue_indices TEXT,
-		width INT,
-		height INT
-	)`
-	if _, err := db.Exec(createTableQuery); err != nil {
-		return fmt.Errorf("failed to create table: %v", err)
+		return err
 	}
 
 	// Convert slices to JSON
@@ -238,12 +217,10 @@ func (m *CrosswordModel) SaveToFile() error {
 func LoadFromFile(date string) (CrosswordModel, error) {
 	var model CrosswordModel
 
-	// Open the database
-	db, err := sql.Open("sqlite3", filename)
+	db, err := getDB()
 	if err != nil {
-		return model, fmt.Errorf("error opening database: %v", err)
+		return model, err
 	}
-	defer db.Close()
 
 	query := `
 		SELECT across, down, answer, grid, grid_nums, clue_indices, width, height
@@ -357,4 +334,47 @@ func (m *CrosswordModel) prepareGrid() {
 			}
 		}
 	}
+}
+
+var (
+	dbOnce sync.Once
+	dbConn *sql.DB
+	dbErr  error
+)
+
+// getDB returns the shared *sql.DB connection pool, initializing it once.
+func getDB() (*sql.DB, error) {
+	dbOnce.Do(func() {
+		if err := os.MkdirAll("data/crossword", 0755); err != nil {
+			dbErr = fmt.Errorf("error creating data dir: %v", err)
+			return
+		}
+
+		db, err := sql.Open("sqlite", filename)
+		if err != nil {
+			dbErr = fmt.Errorf("error opening database: %v", err)
+			return
+		}
+
+		if _, err := db.Exec(`
+			CREATE TABLE IF NOT EXISTS crosswords (
+				date TEXT PRIMARY KEY,
+				across TEXT,
+				down TEXT,
+				answer TEXT,
+				grid TEXT,
+				grid_nums TEXT,
+				clue_indices TEXT,
+				width INT,
+				height INT
+			)
+		`); err != nil {
+			db.Close()
+			dbErr = fmt.Errorf("failed to create table: %v", err)
+			return
+		}
+
+		dbConn = db
+	})
+	return dbConn, dbErr
 }
