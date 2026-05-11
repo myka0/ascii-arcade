@@ -112,6 +112,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "ctrl+h":
+			m.handleSaveGame()
+			m.activeModel = nil
 			m.isGameSelected = false
 			m.isHelpSelected = false
 			return m, nil
@@ -159,7 +161,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// If the active game wants to go home, exit the game
 		if cmd != nil && cmd() == "home" {
+			m.handleSaveGame()
+			m.activeModel = nil
 			m.isGameSelected = false
+			m.isHelpSelected = false
 			return m, nil
 		}
 
