@@ -300,8 +300,6 @@ func (m CrosswordModel) viewTopRow(y int) string {
 			top[x] = styleCell(!isEven, IncorrectTopEven, IncorrectTopOdd).Render("▄▄▄▄▄")
 		case isEmpty && isIncorrectAbove:
 			top[x] = FGIncorrect.Render("▀▀▀▀▀")
-		case isCursor && isIncorrectAbove:
-			top[x] = IncorrectTopCursor.Render("▀▀▀▀▀")
 		case isAcross && isIncorrectAbove:
 			top[x] = IncorrectTopAcross.Render("▀▀▀▀▀")
 		case isDown && isIncorrectAbove:
