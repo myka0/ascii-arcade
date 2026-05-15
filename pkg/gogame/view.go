@@ -1,11 +1,10 @@
 package gogame
 
 import (
+	"ascii-arcade/internal/components"
 	"fmt"
 
 	"ascii-arcade/internal/colors"
-	"ascii-arcade/pkg/overlay"
-
 	"image/color"
 
 	tea "charm.land/bubbletea/v2"
@@ -226,45 +225,22 @@ func viewBoardSizeIndicator(size int, markingDeadStones bool) string {
 
 // viewGameOver renders the end of game UI.
 func (m *GoModel) viewGameOver() string {
-	mainView := m.viewBoard()
-	bgColor := colors.Dark2
-
 	// Determine the game outcome
-	var (
-		winnerText string
-		winColor   color.Color
-	)
+	var winner string
+	var color color.Color
 	switch m.score.Winner {
 	case Black:
-		winnerText = fmt.Sprintf("Black wins!  %.1f vs %.1f", m.score.BlackScore, m.score.WhiteScore)
-		winColor = colors.Orange
+		winner = fmt.Sprintf("Black wins!  %.1f vs %.1f", m.score.BlackScore, m.score.WhiteScore)
+		color = colors.Orange
 	case White:
-		winnerText = fmt.Sprintf("White wins!  %.1f vs %.1f", m.score.WhiteScore, m.score.BlackScore)
-		winColor = colors.Purple
+		winner = fmt.Sprintf("White wins!  %.1f vs %.1f", m.score.WhiteScore, m.score.BlackScore)
+		color = colors.Purple
 	default:
-		winnerText = fmt.Sprintf("Draw!  %.1f each", m.score.BlackScore)
-		winColor = colors.Blue
+		winner = fmt.Sprintf("Draw!  %.1f each", m.score.BlackScore)
+		color = colors.Blue
 	}
-	winnerStyled := lipgloss.NewStyle().Foreground(winColor).Render(winnerText)
 
-	// Style for interactive buttons
-	buttonStyle := lipgloss.NewStyle().
-		Foreground(bgColor).
-		Background(winColor).
-		Padding(0, 1)
-
-	// Button alignment box
-	buttonBox := lipgloss.NewStyle().
-		Background(bgColor).
-		Width(12)
-
-	resetButton := zone.Mark("reset", buttonStyle.Render("Reset"))
-	exitButton := zone.Mark("exit", buttonStyle.Render("Exit"))
-	buttons := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		buttonBox.Align(lipgloss.Left).Render(resetButton),
-		buttonBox.Align(lipgloss.Right).Render(exitButton),
-	)
+	winner = lipgloss.NewStyle().Foreground(color).Render(winner)
 
 	// Last move notation
 	details := ""
@@ -274,13 +250,7 @@ func (m *GoModel) viewGameOver() string {
 			Render("Last move: " + formatPosition(*m.lastMove, m.boardSize))
 	}
 
-	return overlay.PlaceNotification(
-		mainView,
-		"Game over.",
-		winnerStyled,
-		details,
-		buttons,
-	)
+	return components.GameOver(color, m.viewBoard(), winner, details)
 }
 
 // formatPosition converts a board Position into standard Go notation

@@ -1,6 +1,9 @@
 package components
 
 import (
+	"ascii-arcade/internal/colors"
+	"ascii-arcade/pkg/overlay"
+	"image/color"
 	"math"
 	"strings"
 
@@ -138,4 +141,33 @@ func Continue() string {
 		zone.Mark("continue", ButtonStyle.Render("Continue")),
 		LightText.Render("Press enter to continue..."),
 	)
+}
+
+// GameOver renders a game over overlay on top of the main view with reset/exit buttons.
+func GameOver(color color.Color, mainView string, content ...string) string {
+	background := colors.Dark2
+
+	buttonStyle := lipgloss.NewStyle().
+		Foreground(background).
+		Background(color).
+		Padding(0, 1)
+
+	// Box used to align buttons
+	buttonBox := lipgloss.NewStyle().
+		Background(background).
+		Width(12)
+
+	// Create interactive buttons and join them side by side
+	resetButton := zone.Mark("reset", buttonStyle.Align(lipgloss.Left).Render("Reset"))
+	exitButton := zone.Mark("exit", buttonStyle.Align(lipgloss.Right).Render("Exit"))
+	buttons := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		buttonBox.Align(lipgloss.Left).Render(resetButton),
+		buttonBox.Align(lipgloss.Right).Render(exitButton),
+	)
+
+	notifContent := []string{"Game over."}
+	notifContent = append(notifContent, content...)
+	notifContent = append(notifContent, buttons)
+	return overlay.PlaceNotification(mainView, notifContent...)
 }

@@ -2,6 +2,7 @@ package chess
 
 import (
 	"ascii-arcade/internal/colors"
+	"ascii-arcade/internal/components"
 	"ascii-arcade/pkg/chess/renderer/ascii"
 	"ascii-arcade/pkg/chess/renderer/block"
 	"ascii-arcade/pkg/chess/renderer/nerdfont"
@@ -43,9 +44,6 @@ func (m ChessModel) View() tea.View {
 
 // viewGameOver renders the end of game UI.
 func (m ChessModel) viewGameOver(renderer PieceRenderer) string {
-	mainView := renderer.View()
-	background := colors.Dark2
-
 	// Determine game outcome and assign appropriate styling
 	var winner string
 	var color color.Color
@@ -62,32 +60,7 @@ func (m ChessModel) viewGameOver(renderer PieceRenderer) string {
 	}
 
 	winner = lipgloss.NewStyle().Foreground(color).Render(winner)
-
-	buttonStyle := lipgloss.NewStyle().
-		Foreground(background).
-		Background(color).
-		Padding(0, 1)
-
-	// Box used to align buttons
-	buttonBox := lipgloss.NewStyle().
-		Background(background).
-		Width(12)
-
-	// Create interactive buttons and join them side by side
-	resetButton := zone.Mark("reset", buttonStyle.Align(lipgloss.Left).Render("Reset"))
-	exitButton := zone.Mark("exit", buttonStyle.Align(lipgloss.Right).Render("Exit"))
-	buttons := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		buttonBox.Align(lipgloss.Left).Render(resetButton),
-		buttonBox.Align(lipgloss.Right).Render(exitButton),
-	)
-
-	return overlay.PlaceNotification(
-		mainView,
-		"Game over.",
-		winner,
-		buttons,
-	)
+	return components.GameOver(color, renderer.View(), winner)
 }
 
 // viewPawnPromotion renders the pawn promotion UI.
