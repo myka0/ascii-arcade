@@ -28,8 +28,7 @@ players take turns placing stones on a grid.
 • A stone cannot be placed where it would be captured
   immediately (suicide), unless it captures opponent stones.`
 
-	ScoringInfo = `Scoring:
-• Area scoring is used: Territory + Stones on board.
+	ScoringInfo = `• Area scoring is used: Territory + Stones on board.
 • White receives 7.5 komi (compensation for going second).
 • The game ends when both players pass consecutively.
 • After the game ends, click stones to mark them as dead,
@@ -40,12 +39,13 @@ players take turns placing stones on a grid.
 // Help returns the Go help screen UI.
 func (m *GoModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
+	scoring := components.Section("Scoring", ScoringInfo)
 
 	// Combine all help menu sections vertically
 	menu := lipgloss.JoinVertical(
 		lipgloss.Left,
 		howToPlay,
-		components.Section("Scoring", ScoringInfo),
+		scoring,
 	)
 
 	shortcutKeybinds := []components.Keybind{
@@ -56,10 +56,10 @@ func (m *GoModel) Help() string {
 	}
 
 	gameKeybinds := []components.Keybind{
-		{Key: "↑/w", Action: "up"},
-		{Key: "↓/s", Action: "down"},
-		{Key: "←/a", Action: "left"},
-		{Key: "→/d", Action: "right"},
+		{Key: "↑ / w", Action: "up"},
+		{Key: "↓ / s", Action: "down"},
+		{Key: "← / a", Action: "left"},
+		{Key: "→ / d", Action: "right"},
 		{Key: "r", Action: "resign"},
 		{Key: "l", Action: "labels"},
 		{Key: "p", Action: "pass"},
