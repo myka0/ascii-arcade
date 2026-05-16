@@ -69,13 +69,15 @@ func (m *GoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleKeyPress handles keyboard input.
 func (m *GoModel) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	key := msg.String()
+
 	// Always allow ctrl+r to reset
-	if msg.String() == "ctrl+r" {
+	if key == "ctrl+r" {
 		return handleReset(m.boardSize), nil
 	}
 
 	// Allow enter to confirm score when marking dead stones
-	if m.markingDeadStones && msg.String() == "enter" {
+	if m.markingDeadStones && key == "enter" {
 		return m.handleConfirmScore()
 	}
 
@@ -84,7 +86,7 @@ func (m *GoModel) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	switch msg.String() {
+	switch key {
 	case "up", "w":
 		if m.cursor.Y > 0 {
 			m.cursor.Y--
