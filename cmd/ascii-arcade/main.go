@@ -7,6 +7,7 @@ import (
 	"ascii-arcade/pkg/crossword"
 	"ascii-arcade/pkg/gogame"
 	"ascii-arcade/pkg/solitaire"
+	"ascii-arcade/pkg/tetris"
 	"ascii-arcade/pkg/wordle"
 
 	"flag"
@@ -103,6 +104,15 @@ func (m model) Init() tea.Cmd {
 
 // Update handles keypress events and updates the model state accordingly.
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// If the active game wants to go home, exit the game
+	if s, ok := msg.(string); ok && s == "home" {
+		m.handleSaveGame()
+		m.activeModel = nil
+		m.isGameSelected = false
+		m.isHelpSelected = false
+		return m, nil
+	}
+
 	// Global key bindings
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -149,24 +159,23 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.isHelpSelected = false
 				return m, nil
 			}
+
+		default:
+			// Forward non-input messages (timer ticks) to the active model
+			if m.isGameSelected && m.activeModel != nil {
+				var cmd tea.Cmd
+				m.activeModel, cmd = m.activeModel.Update(msg)
+				return m, cmd
+			}
 		}
 
 		return m, nil
 	}
 
-	// If the game is selected, pass the keypress to the active model
+	// If the game is selected, pass the message to the active model
 	if m.isGameSelected {
 		var cmd tea.Cmd
 		m.activeModel, cmd = m.activeModel.Update(msg)
-
-		// If the active game wants to go home, exit the game
-		if cmd != nil && cmd() == "home" {
-			m.handleSaveGame()
-			m.activeModel = nil
-			m.isGameSelected = false
-			m.isHelpSelected = false
-			return m, nil
-		}
 
 		return m, cmd
 	}
@@ -232,20 +241,30 @@ func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 // handleSwitchModel swaps in a new game model based on selected tab.
 func (m *model) handleSwitchModel() tea.Model {
 	switch m.selectedGame {
+	case "Tetris":
+		m.activeModel = tetris.InitTetrisModel()
+	case "Snake":
+		return m
 	case "Solitaire":
 		m.activeModel = solitaire.InitSolitaireModel()
+	case "Minesweeper":
+		return m
 	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
 	case "Wordle":
 		m.activeModel = wordle.InitWordleModel()
 	case "Connections":
 		m.activeModel = connections.InitConnectionsModel()
-	case "Checkers":
-		m.activeModel = checkers.InitCheckersModel()
-	case "Chess":
-		m.activeModel = chess.InitChessModel()
+	case "Sudoku":
+		return m
 	case "Go":
 		m.activeModel = gogame.InitGoModel()
+	case "Chess":
+		m.activeModel = chess.InitChessModel()
+	case "Checkers":
+		m.activeModel = checkers.InitCheckersModel()
+	case "ConnectFour":
+		return m
 	default:
 		return m
 	}

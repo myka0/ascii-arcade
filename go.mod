@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	charm.land/bubbletea/v2 v2.0.6
 	charm.land/lipgloss/v2 v2.0.3
+	github.com/Broderick-Westrope/tetrigo v0.2.0
 	github.com/charmbracelet/x/ansi v0.11.7
 	github.com/lrstanley/bubblezone/v2 v2.0.0
 	github.com/muesli/reflow v0.3.0

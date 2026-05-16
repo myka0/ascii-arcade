@@ -9,7 +9,7 @@ import (
 )
 
 var implementedGames = map[string]bool{
-	"Tetris":       false,
+	"Tetris":       true,
 	"Snake":        false,
 	"Solitaire":    true,
 	"Minesweeper":  false,
