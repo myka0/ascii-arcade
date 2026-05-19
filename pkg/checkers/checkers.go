@@ -95,7 +95,7 @@ func InitCheckersBoard() [][]t.Piece {
 }
 
 // Init implements the Bubble Tea interface for initialization.
-func (m CheckersModel) Init() tea.Cmd {
+func (m *CheckersModel) Init() tea.Cmd {
 	return nil
 }
 

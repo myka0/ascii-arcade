@@ -28,7 +28,7 @@ var (
 )
 
 // Help returns the Wordle help screen UI
-func (m WordleModel) Help() string {
+func (m *WordleModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
 
 	// Combine all help menu sections vertically

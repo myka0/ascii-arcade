@@ -30,7 +30,7 @@ squares with words that match the clues.
 )
 
 // Help returns the Crossword help screen UI
-func (m CrosswordModel) Help() string {
+func (m *CrosswordModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
 
 	// Combine all help menu sections vertically

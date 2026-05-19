@@ -69,7 +69,7 @@ func InitSolitaireModel() *SolitaireModel {
 }
 
 // Init implements the Bubble Tea interface for initialization.
-func (m SolitaireModel) Init() tea.Cmd {
+func (m *SolitaireModel) Init() tea.Cmd {
 	return nil
 }
 
@@ -313,7 +313,7 @@ func (m *SolitaireModel) handleMouseClick(msg tea.MouseMsg) {
 }
 
 // canMoveToFoundation checks if the given card can legally be placed onto its foundation pile.
-func (m SolitaireModel) canMoveToFoundation(card Card) bool {
+func (m *SolitaireModel) canMoveToFoundation(card Card) bool {
 	foundation := m.foundations[card.Suit]
 
 	// Only Aces can be placed on empty foundation piles
@@ -326,7 +326,7 @@ func (m SolitaireModel) canMoveToFoundation(card Card) bool {
 }
 
 // canMoveToTableau checks if the given card can be placed on the target tableau pile.
-func (m SolitaireModel) canMoveToTableau(card Card, tableau Deck) bool {
+func (m *SolitaireModel) canMoveToTableau(card Card, tableau Deck) bool {
 	// Only Kings can be placed on empty tableau piles
 	if tableau.Size() == 0 {
 		return card.Rank == King
@@ -373,7 +373,7 @@ func (m *SolitaireModel) addTableauMove(from, to *Deck, flip bool, cards ...*Car
 }
 
 // View renders the entire Solitaire board.
-func (m SolitaireModel) View() tea.View {
+func (m *SolitaireModel) View() tea.View {
 	// Render top row: Stock, Waste, and Foundations
 	topRow := lipgloss.JoinHorizontal(
 		lipgloss.Top,

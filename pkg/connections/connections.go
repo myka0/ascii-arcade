@@ -44,7 +44,7 @@ func InitConnectionsModel() *ConnectionsModel {
 }
 
 // Init implements the Bubble Tea interface for initialization.
-func (m ConnectionsModel) Init() tea.Cmd {
+func (m *ConnectionsModel) Init() tea.Cmd {
 	return nil
 }
 

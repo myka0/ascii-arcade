@@ -25,7 +25,7 @@ const (
 )
 
 // View renders the entire Chess board.
-func (m CheckersModel) View() tea.View {
+func (m *CheckersModel) View() tea.View {
 	renderer := m.getPieceRenderer(m.renderer)
 
 	if m.gameOver {
@@ -36,7 +36,7 @@ func (m CheckersModel) View() tea.View {
 }
 
 // viewGameOver renders the end of game UI.
-func (m CheckersModel) viewGameOver(renderer PieceRenderer) string {
+func (m *CheckersModel) viewGameOver(renderer PieceRenderer) string {
 	// Determine game outcome and assign appropriate styling
 	var winner string
 	var color color.Color
@@ -57,7 +57,7 @@ func (m CheckersModel) viewGameOver(renderer PieceRenderer) string {
 }
 
 // getPieceRenderer returns the appropriate piece renderer.
-func (m CheckersModel) getPieceRenderer(renderer int) PieceRenderer {
+func (m *CheckersModel) getPieceRenderer(renderer int) PieceRenderer {
 	context := t.RenderContext{
 		Board:        m.board,
 		Selected:     m.selected,

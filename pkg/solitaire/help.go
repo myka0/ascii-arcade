@@ -39,7 +39,7 @@ Clear all the cards to win!`
 )
 
 // Help returns the Solitaire help screen UI
-func (m SolitaireModel) Help() string {
+func (m *SolitaireModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
 	shortcuts := components.Section("Shortcuts", Shortcuts)
 

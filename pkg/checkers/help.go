@@ -49,7 +49,7 @@ no legal moves remaining.`
 )
 
 // Help returns the Checkers help screen UI
-func (m CheckersModel) Help() string {
+func (m *CheckersModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
 
 	// Combine all help menu sections vertically

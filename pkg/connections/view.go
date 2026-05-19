@@ -11,7 +11,7 @@ import (
 )
 
 // View renders the connections game board.
-func (m ConnectionsModel) View() tea.View {
+func (m *ConnectionsModel) View() tea.View {
 	// Render the board rows
 	var rows [4]string
 	for i := range 4 {
@@ -37,7 +37,7 @@ func (m ConnectionsModel) View() tea.View {
 }
 
 // viewRevealedRow renders a fully revealed group row with color and clue styling.
-func (m ConnectionsModel) viewRevealedRow(row int) string {
+func (m *ConnectionsModel) viewRevealedRow(row int) string {
 	group := m.wordGroups[row]
 
 	// Determine color based on group color number
@@ -58,7 +58,7 @@ func (m ConnectionsModel) viewRevealedRow(row int) string {
 }
 
 // viewBoardRow renders a row of cells in the connections grid.
-func (m ConnectionsModel) viewBoardRow(row int) string {
+func (m *ConnectionsModel) viewBoardRow(row int) string {
 	var cells [4]string
 
 	start := row * 4
@@ -83,7 +83,7 @@ func (m ConnectionsModel) viewBoardRow(row int) string {
 }
 
 // viewMistakesRemaining renders the number of mistakes remaining.
-func (m ConnectionsModel) viewMistakesRemaining() string {
+func (m *ConnectionsModel) viewMistakesRemaining() string {
 	mistakes := MistakeCell.Render(strings.Repeat("● ", m.mistakesRemaining))
 	return FGLightText.Render("Mistakes Remaining: ") + mistakes
 }

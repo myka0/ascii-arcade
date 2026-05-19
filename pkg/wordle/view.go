@@ -8,7 +8,7 @@ import (
 )
 
 // View renders the entire game UI.
-func (m WordleModel) View() tea.View {
+func (m *WordleModel) View() tea.View {
 	// Generate each row of the Wordle grid
 	var rows [6]string
 	for y := range m.guesses {
@@ -28,7 +28,7 @@ func (m WordleModel) View() tea.View {
 }
 
 // viewGridRow renders a single row of the Wordle grid based on its position.
-func (m WordleModel) viewGridRow(y int) string {
+func (m *WordleModel) viewGridRow(y int) string {
 	// Initialize keyStates to keyAbsent
 	keyStates := [5]int{1, 1, 1, 1, 1}
 	guess := m.guesses[y]
@@ -62,7 +62,7 @@ func (m WordleModel) viewGridRow(y int) string {
 }
 
 // viewKeyboard renders the on screen keyboard with styling.
-func (m WordleModel) viewKeyboard() string {
+func (m *WordleModel) viewKeyboard() string {
 	return Border.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Center,
@@ -74,7 +74,7 @@ func (m WordleModel) viewKeyboard() string {
 }
 
 // viewKeyboardRow renders a row of keys with their appropriate styles.
-func (m WordleModel) viewKeyboardRow(letters []byte) string {
+func (m *WordleModel) viewKeyboardRow(letters []byte) string {
 	keys := make([]string, len(letters))
 
 	// Style each key in the keyboard row
@@ -87,7 +87,7 @@ func (m WordleModel) viewKeyboardRow(letters []byte) string {
 }
 
 // styleCell returns a style object based on the key state.
-func (m WordleModel) styleCell(keyStyle int) lipgloss.Style {
+func (m *WordleModel) styleCell(keyStyle int) lipgloss.Style {
 	switch keyStyle {
 	case keyAbsent:
 		return FGKeyAbsent

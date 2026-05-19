@@ -28,7 +28,7 @@ const (
 )
 
 // View renders the entire Chess board.
-func (m ChessModel) View() tea.View {
+func (m *ChessModel) View() tea.View {
 	renderer := m.getPieceRenderer(m.renderer)
 
 	if m.gameOver {
@@ -43,7 +43,7 @@ func (m ChessModel) View() tea.View {
 }
 
 // viewGameOver renders the end of game UI.
-func (m ChessModel) viewGameOver(renderer PieceRenderer) string {
+func (m *ChessModel) viewGameOver(renderer PieceRenderer) string {
 	// Determine game outcome and assign appropriate styling
 	var winner string
 	var color color.Color
@@ -64,7 +64,7 @@ func (m ChessModel) viewGameOver(renderer PieceRenderer) string {
 }
 
 // viewPawnPromotion renders the pawn promotion UI.
-func (m ChessModel) viewPawnPromotion(renderer PieceRenderer) string {
+func (m *ChessModel) viewPawnPromotion(renderer PieceRenderer) string {
 	mainView := renderer.View()
 	color := m.turn * -1
 	background := colors.Dark2
@@ -85,7 +85,7 @@ func (m ChessModel) viewPawnPromotion(renderer PieceRenderer) string {
 }
 
 // getPieceRenderer returns the appropriate piece renderer.
-func (m ChessModel) getPieceRenderer(renderer int) PieceRenderer {
+func (m *ChessModel) getPieceRenderer(renderer int) PieceRenderer {
 	context := t.RenderContext{
 		Board:      m.board,
 		Selected:   m.selected,

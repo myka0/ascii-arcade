@@ -40,7 +40,7 @@ func InitWordleModel() *WordleModel {
 }
 
 // Init implements the Bubble Tea interface for initialization.
-func (m WordleModel) Init() tea.Cmd {
+func (m *WordleModel) Init() tea.Cmd {
 	return nil
 }
 
@@ -152,7 +152,7 @@ func (m *WordleModel) handleInput(msg tea.KeyPressMsg) {
 }
 
 // updateKeyStates updates the keyboard based on the most recent guess.
-func (m WordleModel) updateKeyStates() {
+func (m *WordleModel) updateKeyStates() {
 	currentGuess := m.guesses[m.cursorY]
 	for i, char := range currentGuess {
 		switch {

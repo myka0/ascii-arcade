@@ -10,7 +10,7 @@ import (
 )
 
 // View renders the complete crossword puzzle UI.
-func (m CrosswordModel) View() tea.View {
+func (m *CrosswordModel) View() tea.View {
 	rows := make([]string, m.height+1)
 
 	// First row is special - it has the top margin
@@ -45,7 +45,7 @@ func (m CrosswordModel) View() tea.View {
 
 // viewCluesBox renders the box containing across and down clues.
 // It displays the current clue in the middle with surrounding clues above and below.
-func (m CrosswordModel) viewCluesBox() string {
+func (m *CrosswordModel) viewCluesBox() string {
 	var clues [13]string
 
 	// Get the across clue index for the current cursor position
@@ -175,7 +175,7 @@ func splitClue(clue string) []string {
 }
 
 // viewMargin renders the top or bottom margin of a row in the grid.
-func (m CrosswordModel) viewMargin(y int, cell string) string {
+func (m *CrosswordModel) viewMargin(y int, cell string) string {
 	top := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
@@ -206,7 +206,7 @@ func (m CrosswordModel) viewMargin(y int, cell string) string {
 }
 
 // viewGridRow renders a row of cells in the crossword grid.
-func (m CrosswordModel) viewGridRow(y int) string {
+func (m *CrosswordModel) viewGridRow(y int) string {
 	cells := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
@@ -246,7 +246,7 @@ func (m CrosswordModel) viewGridRow(y int) string {
 }
 
 // viewTopRow renders the connecting row between two grid rows.
-func (m CrosswordModel) viewTopRow(y int) string {
+func (m *CrosswordModel) viewTopRow(y int) string {
 	top := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
@@ -347,7 +347,7 @@ func (m CrosswordModel) viewTopRow(y int) string {
 }
 
 // viewGridNum renders the grid number for a cell as superscript characters.
-func (m CrosswordModel) viewGridNum(x, y int) string {
+func (m *CrosswordModel) viewGridNum(x, y int) string {
 	gridNum := m.gridNums[y][x]
 
 	// If no grid number, return spaces

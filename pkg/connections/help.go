@@ -40,7 +40,7 @@ Each group is assigned a color, which will be revealed as you solve:
 )
 
 // Help returns the Connections help screen UI
-func (m ConnectionsModel) Help() string {
+func (m *ConnectionsModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
 
 	// Combine all help menu sections vertically

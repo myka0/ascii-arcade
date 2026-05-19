@@ -45,7 +45,7 @@ strategy game.
 )
 
 // Help returns the Chess help screen UI
-func (m ChessModel) Help() string {
+func (m *ChessModel) Help() string {
 	howToPlay := components.Section("How To Play", Intro)
 
 	// Combine all help menu sections vertically

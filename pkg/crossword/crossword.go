@@ -62,7 +62,7 @@ func InitCrosswordModel() *CrosswordModel {
 }
 
 // Init implements the Bubble Tea interface for initialization.
-func (m CrosswordModel) Init() tea.Cmd {
+func (m *CrosswordModel) Init() tea.Cmd {
 	return nil
 }
 

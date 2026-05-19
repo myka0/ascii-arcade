@@ -130,7 +130,7 @@ func InitChessBoard() [][]t.Piece {
 }
 
 // Init implements the Bubble Tea interface for initialization.
-func (m ChessModel) Init() tea.Cmd {
+func (m *ChessModel) Init() tea.Cmd {
 	return nil
 }
 
