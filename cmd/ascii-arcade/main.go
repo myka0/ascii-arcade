@@ -81,7 +81,7 @@ type model struct {
 }
 
 // Creates the initial model with connections as default.
-func initialModel(startGame string) *model {
+func initialModel(startGame string) model {
 	m := model{}
 	m.games = handleSearch("")
 
@@ -91,7 +91,7 @@ func initialModel(startGame string) *model {
 		m.handleSwitchModel()
 	}
 
-	return &m
+	return m
 }
 
 // Init implements the Bubble Tea interface for initialization.
@@ -103,7 +103,7 @@ func (m model) Init() tea.Cmd {
 }
 
 // Update handles keypress events and updates the model state accordingly.
-func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// If the active game wants to go home, exit the game
 	if s, ok := msg.(string); ok && s == "home" {
 		m.handleSaveGame()
@@ -137,7 +137,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// If the window is resized, store its new dimensions
 	case tea.WindowSizeMsg:
-		return m, m.handleResize(msg)
+		return m.handleResize(msg)
 	}
 
 	// If the help is selected use the help key bindings
@@ -184,7 +184,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleHomeMenuInput handles keypress events for the home menu.
-func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -200,12 +200,7 @@ func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			m.selectedGame = m.games[m.selectedGameIdx]
-			m.handleSwitchModel()
-			if m.activeModel == nil {
-				m.message = "Selected game not implemented yet."
-				return m, nil
-			}
-			return m.handleInitGame()
+			return m.handleSwitchModel()
 
 		case "backspace":
 			m.message = ""
@@ -239,16 +234,16 @@ func (m *model) handleHomeMenuInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleSwitchModel swaps in a new game model based on selected tab.
-func (m *model) handleSwitchModel() tea.Model {
+func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
 	switch m.selectedGame {
 	case "Tetris":
 		m.activeModel = tetris.InitTetrisModel()
 	case "Snake":
-		return m
+		m.activeModel = nil
 	case "Solitaire":
 		m.activeModel = solitaire.InitSolitaireModel()
 	case "Minesweeper":
-		return m
+		m.activeModel = nil
 	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
 	case "Wordle":
@@ -256,7 +251,7 @@ func (m *model) handleSwitchModel() tea.Model {
 	case "Connections":
 		m.activeModel = connections.InitConnectionsModel()
 	case "Sudoku":
-		return m
+		m.activeModel = nil
 	case "Go":
 		m.activeModel = gogame.InitGoModel()
 	case "Chess":
@@ -264,30 +259,31 @@ func (m *model) handleSwitchModel() tea.Model {
 	case "Checkers":
 		m.activeModel = checkers.InitCheckersModel()
 	case "ConnectFour":
-		return m
+		m.activeModel = nil
 	default:
-		return m
+		m.activeModel = nil
 	}
 
 	m.isGameSelected = true
 	m.isHelpSelected = true
-	return m
-}
 
-// handleInitGame initializes the game model.
-func (m *model) handleInitGame() (tea.Model, tea.Cmd) {
+	if m.activeModel == nil {
+		m.message = "Selected game not implemented yet."
+		return m, nil
+	}
+
 	return m, m.activeModel.Init()
 }
 
-// handleSaveGame updates window size on resize.
-func (m *model) handleResize(msg tea.WindowSizeMsg) tea.Cmd {
+// handleResize updates window size on resize.
+func (m model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.windowHeight = msg.Height
 	m.windowWidth = msg.Width
-	return nil
+	return m, nil
 }
 
 // handleSaveGame saves the current model if it implements Saver.
-func (m *model) handleSaveGame() {
+func (m model) handleSaveGame() {
 	if saver, ok := m.activeModel.(Saver); ok {
 		if err := saver.SaveToFile(); err != nil {
 			fmt.Println("Auto-save failed:", err)
