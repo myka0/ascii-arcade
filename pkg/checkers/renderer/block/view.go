@@ -20,9 +20,11 @@ func (r BlockRenderer) View() string {
 
 	// Render each piece on the board with the appropriate style
 	for y := range r.Board {
-		for x := range r.Board[y] {
-			piece := r.Board[y][x]
-			pieces[y] = append(pieces[y], r.viewPiece(piece.Value, pieceStyle(piece.Color)))
+		row := r.Board[y]
+		pieces[y] = make([]string, len(row))
+		for x := range row {
+			piece := row[x]
+			pieces[y][x] = r.viewPiece(piece.Value, pieceStyle(piece.Color))
 		}
 	}
 
@@ -61,7 +63,7 @@ func (r BlockRenderer) viewBoard(board [][]string) string {
 	rows := make([]string, len(board))
 
 	for y := range board {
-		var row []string
+		row := make([]string, len(board[y]))
 		for x, content := range board[y] {
 			// Determine if cell is even for checkerboard pattern
 			isEven := (x+y)%2 == 0
@@ -69,9 +71,7 @@ func (r BlockRenderer) viewBoard(board [][]string) string {
 
 			// Use a unique zone label for mouse interactivity
 			label := fmt.Sprint(y*len(board) + x)
-			cell := zone.Mark(label, style.Render(content))
-
-			row = append(row, cell)
+			row[x] = zone.Mark(label, style.Render(content))
 		}
 
 		rows[y] = lipgloss.JoinHorizontal(lipgloss.Top, row...)

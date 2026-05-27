@@ -1,10 +1,9 @@
 package gogame
 
 import (
+	"ascii-arcade/internal/colors"
 	"ascii-arcade/internal/components"
 	"fmt"
-
-	"ascii-arcade/internal/colors"
 	"image/color"
 
 	tea "charm.land/bubbletea/v2"
@@ -62,7 +61,8 @@ func (m *GoModel) viewTitle() string {
 
 // viewGrid builds the complete grid of intersections, stones, and labels.
 func (m *GoModel) viewGrid() string {
-	var rows []string
+	// capacity = top row + board + optional labels
+	rows := make([]string, 0, 2*(m.boardSize)+1)
 
 	// Top edge row
 	rows = append(rows, m.viewGridRow(gridTopLeft, gridTopIntersect, gridTopRight, 0))
@@ -87,7 +87,7 @@ func (m *GoModel) viewGrid() string {
 
 // viewColumnLabels renders the letter coordinate labels below the board.
 func (m *GoModel) viewColumnLabels() string {
-	var row []string
+	row := make([]string, 0, m.boardSize+1)
 	row = append(row, LabelStyle.Render(" "))
 	for _, l := range columnLabels(m.boardSize) {
 		row = append(row, LabelStyle.Render(fmt.Sprintf("  %s ", l)))
@@ -110,7 +110,9 @@ func (m *GoModel) viewMessage() string {
 // viewGridRow renders a single row of intersection cells in the grid.
 func (m *GoModel) viewGridRow(leftCorner, intersection, rightCorner string, y int) string {
 	connector := BoardLine.Render(gridHorizBar)
-	var row []string
+
+	// capacity = optional label + (boardSize cells) + (boardSize-1 connectors).
+	row := make([]string, 0, 2*m.boardSize)
 
 	// Row number label on the left side
 	if m.showLabels {
@@ -139,7 +141,7 @@ func (m *GoModel) buildInteractiveCell(intersection string, x, y int) string {
 
 // viewGridConnectors renders a row of vertical bar connectors between grid rows.
 func (m *GoModel) viewGridConnectors() string {
-	var row []string
+	row := make([]string, 0, m.boardSize)
 	if m.showLabels {
 		row = append(row, BoardLine.Render("  "+gridVertBar))
 	} else {

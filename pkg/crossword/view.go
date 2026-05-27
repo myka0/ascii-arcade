@@ -16,7 +16,7 @@ func (m *CrosswordModel) View() tea.View {
 	// First row is special - it has the top margin
 	rows[0] = lipgloss.JoinVertical(
 		lipgloss.Left,
-		lipgloss.JoinHorizontal(lipgloss.Bottom, m.viewMargin(0, "▄▄▄▄▄")),
+		lipgloss.JoinHorizontal(lipgloss.Bottom, m.viewTopMargin()),
 		lipgloss.JoinHorizontal(lipgloss.Bottom, m.viewGridRow(0)),
 	)
 
@@ -30,7 +30,7 @@ func (m *CrosswordModel) View() tea.View {
 	}
 
 	// Last row is the bottom margin
-	rows[m.height] = m.viewMargin(m.height-1, "▀▀▀▀▀")
+	rows[m.height] = m.viewBottomMargin(m.height - 1)
 
 	// Combine all elements vertically
 	return tea.NewView(
@@ -174,8 +174,39 @@ func splitClue(clue string) []string {
 	return lines
 }
 
-// viewMargin renders the top or bottom margin of a row in the grid.
-func (m *CrosswordModel) viewMargin(y int, cell string) string {
+// viewTopMargin renders the top margin of a row in the grid.
+func (m *CrosswordModel) viewTopMargin() string {
+	top := make([]string, m.width)
+	for x, char := range m.grid[0] {
+		isEven := x%2 == 0
+		isIncorrect := m.incorrect[0][x]
+		isCursor := x == m.cursor.X && 0 == m.cursor.Y
+		isAcross := m.clue == m.clueAt(x, 0) && m.isAcross
+		isDown := m.clue == m.clueAt(x, 0) && !m.isAcross && m.clueIndices[0][x].Y != -1
+		isEmpty := char == '.'
+
+		// Apply appropriate styling based on cell state
+		switch {
+		case isCursor:
+			top[x] = CursorLowerBar
+		case isIncorrect:
+			top[x] = IncorrectLowerBar
+		case isAcross:
+			top[x] = AcrossLowerBar
+		case isDown:
+			top[x] = DownLowerBar
+		case isEmpty:
+			top[x] = Blank
+		default:
+			top[x] = switchStyledBar(isEven, EmptyBGLowerBar)
+		}
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, top[:]...)
+}
+
+// viewBottomMargin renders the bottom margin of a row in the grid.
+func (m *CrosswordModel) viewBottomMargin(y int) string {
 	top := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
@@ -188,17 +219,17 @@ func (m *CrosswordModel) viewMargin(y int, cell string) string {
 		// Apply appropriate styling based on cell state
 		switch {
 		case isCursor:
-			top[x] = FGCursor.Render(cell)
+			top[x] = CursorUpperBar
 		case isIncorrect:
-			top[x] = FGIncorrect.Render(cell)
+			top[x] = IncorrectUpperBar
 		case isAcross:
-			top[x] = FGAcross.Render(cell)
+			top[x] = AcrossUpperBar
 		case isDown:
-			top[x] = FGDown.Render(cell)
+			top[x] = DownUpperBar
 		case isEmpty:
-			top[x] = "     " // Empty space for black cells
+			top[x] = Blank
 		default:
-			top[x] = styleCell(isEven, FGEven, FGOdd).Render(cell)
+			top[x] = switchStyledBar(isEven, EmptyBGUpperBar)
 		}
 	}
 
@@ -218,7 +249,8 @@ func (m *CrosswordModel) viewGridRow(y int) string {
 
 		// Get the grid number for this cell
 		gridNum := m.viewGridNum(x, y)
-		cells[x] = fmt.Sprintf("%s%c  ", gridNum, char)
+		cellContent := fmt.Sprintf("%s%c  ", gridNum, char)
+		cells[x] = cellContent
 
 		// Apply appropriate styling based on cell state
 		switch {
@@ -232,13 +264,15 @@ func (m *CrosswordModel) viewGridRow(y int) string {
 			cell := CursorCell.Underline(true).Render(string(char))
 			cells[x] = CursorCell.Render(gridNum) + cell + CursorCell.Render("  ")
 		case isAcross:
-			cells[x] = AcrossCell.Render(cells[x])
+			cells[x] = AcrossCell.Render(cellContent)
 		case isDown:
-			cells[x] = DownCell.Render(cells[x])
+			cells[x] = DownCell.Render(cellContent)
 		case isEmpty:
-			cells[x] = "     "
+			cells[x] = Blank
+		case isEven:
+			cells[x] = EvenCell.Render(cellContent)
 		default:
-			cells[x] = styleCell(isEven, EvenCell, OddCell).Render(cells[x])
+			cells[x] = OddCell.Render(cellContent)
 		}
 	}
 
@@ -271,75 +305,75 @@ func (m *CrosswordModel) viewTopRow(y int) string {
 		switch {
 		// Cursor related cases
 		case isCursor && isEmptyAbove:
-			top[x] = FGCursor.Render("▄▄▄▄▄")
+			top[x] = CursorLowerBar
 		case isCursor && isIncorrectAbove:
-			top[x] = IncorrectTopCursor.Render("▀▀▀▀▀")
+			top[x] = IncorrectTopCursorUpperBar
 		case isCursor && !m.isAcross:
-			top[x] = CursorDownTop.Render("▄▄▄▄▄")
+			top[x] = CursorDownTopLowerBar
 		case isCursor:
-			top[x] = styleCell(!isEven, CursorTopEven, CursorTopOdd).Render("▄▄▄▄▄")
+			top[x] = switchStyledBar(!isEven, CursorTopLowerBar)
 		case isEmpty && isCursorAbove:
-			top[x] = FGCursor.Render("▀▀▀▀▀")
+			top[x] = CursorUpperBar
 		case isCursorAbove && isIncorrect:
-			top[x] = IncorrectTopCursor.Render("▄▄▄▄▄")
+			top[x] = IncorrectTopCursorLowerBar
 		case isCursorAbove && !m.isAcross:
-			top[x] = CursorDownTop.Render("▀▀▀▀▀")
+			top[x] = CursorDownTopUpperBar
 		case isCursorAbove:
-			top[x] = styleCell(isEven, CursorTopEven, CursorTopOdd).Render("▀▀▀▀▀")
+			top[x] = switchStyledBar(isEven, CursorTopUpperBar)
 
 		// Incorrect cell cases
 		case isIncorrect && isEmptyAbove:
-			top[x] = FGCursor.Render("▄▄▄▄▄")
+			top[x] = CursorLowerBar
 		case isIncorrect && isIncorrectAbove:
-			top[x] = FGIncorrect.Render("█████")
+			top[x] = IncorrectFullBar
 		case isIncorrect && isAcrossAbove:
-			top[x] = IncorrectTopAcross.Render("▄▄▄▄▄")
+			top[x] = IncorrectTopAcrossLowerBar
 		case isIncorrect && isDownAbove:
-			top[x] = IncorrectTopDown.Render("▄▄▄▄▄")
+			top[x] = IncorrectTopDownLowerBar
 		case isIncorrect:
-			top[x] = styleCell(!isEven, IncorrectTopEven, IncorrectTopOdd).Render("▄▄▄▄▄")
+			top[x] = switchStyledBar(!isEven, IncorrectTopLowerBar)
 		case isEmpty && isIncorrectAbove:
-			top[x] = FGIncorrect.Render("▀▀▀▀▀")
+			top[x] = IncorrectUpperBar
 		case isAcross && isIncorrectAbove:
-			top[x] = IncorrectTopAcross.Render("▀▀▀▀▀")
+			top[x] = IncorrectTopAcrossUpperBar
 		case isDown && isIncorrectAbove:
-			top[x] = IncorrectTopDown.Render("▀▀▀▀▀")
+			top[x] = IncorrectTopDownUpperBar
 		case isIncorrectAbove:
-			top[x] = styleCell(isEven, IncorrectTopEven, IncorrectTopOdd).Render("▀▀▀▀▀")
+			top[x] = switchStyledBar(isEven, IncorrectTopUpperBar)
 
 		// Across clue cases
 		case isAcross && isEmptyAbove:
-			top[x] = FGAcross.Render("▄▄▄▄▄")
+			top[x] = AcrossLowerBar
 		case isAcross:
-			top[x] = styleCell(!isEven, AcrossTopEven, AcrossTopOdd).Render("▄▄▄▄▄")
+			top[x] = switchStyledBar(!isEven, AcrossTopLowerBar)
 		case isEmpty && isAcrossAbove:
-			top[x] = FGAcross.Render("▀▀▀▀▀")
+			top[x] = AcrossUpperBar
 		case isAcrossAbove:
-			top[x] = styleCell(isEven, AcrossTopEven, AcrossTopOdd).Render("▀▀▀▀▀")
+			top[x] = switchStyledBar(isEven, AcrossTopUpperBar)
 
 		// Down clue cases
 		case isDown && isEmptyAbove:
-			top[x] = FGDown.Render("▄▄▄▄▄")
+			top[x] = DownLowerBar
 		case isDown && !m.isAcross:
-			top[x] = FGDown.Render("█████")
+			top[x] = DownFullBar
 		case isDown:
-			top[x] = styleCell(!isEven, DownTopEven, DownTopOdd).Render("▄▄▄▄▄")
+			top[x] = switchStyledBar(!isEven, DownTopLowerBar)
 		case isEmpty && isDownAbove:
-			top[x] = FGDown.Render("▀▀▀▀▀")
+			top[x] = DownUpperBar
 		case isDownAbove:
-			top[x] = styleCell(isEven, DownTopEven, DownTopOdd).Render("▀▀▀▀▀")
+			top[x] = switchStyledBar(isEven, DownTopUpperBar)
 
 		// Empty cell cases
 		case isEmpty && isEmptyAbove:
-			top[x] = "     " // Space between black cells
+			top[x] = Blank // Space between black cells
 		case isEmpty:
-			top[x] = styleCell(isEven, FGOdd, FGEven).Render("▀▀▀▀▀")
+			top[x] = switchStyledBar(!isEven, EmptyBGUpperBar)
 		case isEmptyAbove:
-			top[x] = styleCell(isEven, FGEven, FGOdd).Render("▄▄▄▄▄")
+			top[x] = switchStyledBar(isEven, EmptyBGLowerBar)
 
 		// Normal cell connection
 		default:
-			top[x] = styleCell(isEven, TopEven, TopOdd).Render("▄▄▄▄▄")
+			top[x] = switchStyledBar(isEven, TopLowerBar)
 		}
 	}
 
@@ -356,21 +390,18 @@ func (m *CrosswordModel) viewGridNum(x, y int) string {
 	}
 
 	// Map of regular digits to superscript characters
-	superscriptMap := map[rune]rune{
-		'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-		'5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
-	}
+	superscriptDigits := [10]rune{'⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'}
 
 	// Convert number to string
 	numStr := strconv.Itoa(gridNum)
 
 	// Convert each digit to its superscript equivalent
-	var result string
+	var b strings.Builder
+	b.Grow(len(numStr) * 3)
 	for _, char := range numStr {
-		if supChar, ok := superscriptMap[char]; ok {
-			result += string(supChar)
-		}
+		b.WriteRune(superscriptDigits[char-'0'])
 	}
+	result := b.String()
 
 	// Add padding for single digit numbers
 	if len(numStr) == 1 {
@@ -386,11 +417,11 @@ func (m *CrosswordModel) viewGridNum(x, y int) string {
 	return result
 }
 
-// styleCell selects between two styles based on a boolean condition.
+// switchStyledBar selects between two styles based on a boolean condition.
 // Used to implement checkerboard patterns in the grid.
-func styleCell(parity bool, firstStyle, secondStyle lipgloss.Style) lipgloss.Style {
+func switchStyledBar(parity bool, styles [2]string) string {
 	if parity {
-		return firstStyle
+		return styles[0]
 	}
-	return secondStyle
+	return styles[1]
 }

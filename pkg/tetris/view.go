@@ -4,6 +4,7 @@ import (
 	"ascii-arcade/internal/colors"
 	"ascii-arcade/internal/components"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,10 +48,14 @@ func (m *TetrisModel) viewBoard() string {
 
 	// Render each row of cells with newlines in between
 	var board strings.Builder
+	if len(matrix) > 0 {
+		// Each rendered cell ~20 bytes (ANSI + 2 chars) plus a newline per row
+		board.Grow(len(matrix)*len(matrix[0])*20 + len(matrix))
+	}
 	for row := range matrix {
 		for col := range matrix[row] {
 			// Each engine cell becomes a two-character "pixel" via renderCell
-			board.WriteString(renderCell(matrix[row][col]))
+			board.WriteString(renderedCells[matrix[row][col]])
 		}
 		if row < len(matrix)-1 {
 			board.WriteByte('\n')
@@ -62,17 +67,15 @@ func (m *TetrisModel) viewBoard() string {
 
 // viewHold renders the held tetrimino inside frame.
 func (m *TetrisModel) viewHold() string {
-	label := PanelLabel.Render("Hold")
 	piece := renderSingleTetrimino(m.game.GetHoldTetrimino())
-	return HoldBox.Render(lipgloss.JoinVertical(lipgloss.Left, label, piece))
+	return HoldBox.Render(lipgloss.JoinVertical(lipgloss.Left, holdLabel, piece))
 }
 
 // viewNext renders the next few tetriminoes from the engine's bag.
 func (m *TetrisModel) viewNext() string {
-	label := PanelLabel.Render("Next")
-
 	bag := m.game.GetBagTetriminos()
-	rows := []string{label}
+	rows := make([]string, 0, nextQueueSize+1)
+	rows = append(rows, nextLabel)
 	for i := 0; i < len(bag) && i < nextQueueSize; i++ {
 		t := bag[i]
 		rows = append(rows, renderSingleTetrimino(&t)+"\n")
@@ -82,8 +85,6 @@ func (m *TetrisModel) viewNext() string {
 
 // viewInfo renders Score, Level, Lines, and Time stacked vertically.
 func (m *TetrisModel) viewInfo() string {
-	label := PanelLabel.Render("Info")
-
 	// Get elapsed time, accounting for pauses
 	var elapsed time.Duration
 	if m.hasStarted {
@@ -96,10 +97,10 @@ func (m *TetrisModel) viewInfo() string {
 	secs := int(elapsed.Seconds()) % 60
 
 	rows := []string{
-		label,
-		infoRow("Score", fmt.Sprintf("%d", m.game.GetTotalScore())),
-		infoRow("Lines", fmt.Sprintf("%d", m.game.GetLinesCleared())),
-		infoRow("Level", fmt.Sprintf("%d", m.game.GetLevel())),
+		infoLabel,
+		infoRow("Score", strconv.Itoa(m.game.GetTotalScore())),
+		infoRow("Lines", strconv.Itoa(m.game.GetLinesCleared())),
+		infoRow("Level", strconv.Itoa(m.game.GetLevel())),
 		"",
 		infoRow("Time", fmt.Sprintf("%02d:%02d", mins, secs)),
 	}
@@ -115,9 +116,9 @@ func infoRow(label, value string) string {
 func (m *TetrisModel) viewGameOver() string {
 	content := lipgloss.JoinVertical(
 		lipgloss.Center,
-		infoRow("Score", fmt.Sprintf("%d", m.game.GetTotalScore())),
-		infoRow("Lines", fmt.Sprintf("%d", m.game.GetLinesCleared())),
-		infoRow("Level", fmt.Sprintf("%d", m.game.GetLevel())),
+		infoRow("Score", strconv.Itoa(m.game.GetTotalScore())),
+		infoRow("Lines", strconv.Itoa(m.game.GetLinesCleared())),
+		infoRow("Level", strconv.Itoa(m.game.GetLevel())),
 	)
 
 	return components.GameOver(colors.Purple, m.viewGame(), content)
@@ -133,11 +134,14 @@ func renderSingleTetrimino(t *tetris.Tetrimino) string {
 
 	// Build the tetrimino string row by row from its cell grid
 	var b strings.Builder
+	if len(t.Cells) > 0 {
+		b.Grow(len(t.Cells)*len(t.Cells[0])*20 + len(t.Cells))
+	}
 	for row := range t.Cells {
 		for col := range t.Cells[row] {
 			if t.Cells[row][col] {
 				// Active: render with the piece's color
-				b.WriteString(renderCell(t.Value))
+				b.WriteString(renderedCells[t.Value])
 			} else {
 				// Inactive: render as empty space
 				b.WriteString(emptyStyle.Render(cellEmpty))
@@ -149,15 +153,4 @@ func renderSingleTetrimino(t *tetris.Tetrimino) string {
 		}
 	}
 	return b.String()
-}
-
-// renderCell converts a byte from the engine's visible matrix into a styled two-character string.
-func renderCell(cell byte) string {
-	if cell == ghost {
-		return ghostStyle.Render(cellGhost)
-	} else if style, ok := cellStyles[cell]; ok {
-		return style.Render(cellFilled)
-	}
-
-	return emptyStyle.Render(cellEmpty)
 }

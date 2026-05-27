@@ -2,6 +2,7 @@ package crossword
 
 import (
 	"ascii-arcade/internal/colors"
+
 	"charm.land/lipgloss/v2"
 )
 
@@ -9,6 +10,11 @@ const (
 	Padding       = 2
 	ClueWidth     = 40
 	FullClueWidth = ClueWidth + Padding
+
+	LowerBar = "▄▄▄▄▄"
+	UpperBar = "▀▀▀▀▀"
+	FullBar  = "█████"
+	Blank    = "     "
 )
 
 var (
@@ -156,4 +162,83 @@ var (
 			Foreground(LightText).
 			Padding(0, 1).
 			Bold(true)
+
+	// Solid bars used in viewMargin / viewTopRow
+	CursorLowerBar = FGCursor.Render(LowerBar)
+	CursorUpperBar = FGCursor.Render(UpperBar)
+
+	IncorrectLowerBar = FGIncorrect.Render(LowerBar)
+	IncorrectUpperBar = FGIncorrect.Render(UpperBar)
+	IncorrectFullBar  = FGIncorrect.Render(FullBar)
+
+	AcrossLowerBar = FGAcross.Render(LowerBar)
+	AcrossUpperBar = FGAcross.Render(UpperBar)
+
+	DownLowerBar = FGDown.Render(LowerBar)
+	DownUpperBar = FGDown.Render(UpperBar)
+	DownFullBar  = FGDown.Render(FullBar)
+
+	// Bars rendered with combined fg/bg styles (top connector cells)
+	IncorrectTopCursorLowerBar = IncorrectTopCursor.Render(LowerBar)
+	IncorrectTopCursorUpperBar = IncorrectTopCursor.Render(UpperBar)
+
+	CursorDownTopLowerBar = CursorDownTop.Render(LowerBar)
+	CursorDownTopUpperBar = CursorDownTop.Render(UpperBar)
+
+	IncorrectTopAcrossLowerBar = IncorrectTopAcross.Render(LowerBar)
+	IncorrectTopAcrossUpperBar = IncorrectTopAcross.Render(UpperBar)
+
+	IncorrectTopDownLowerBar = IncorrectTopDown.Render(LowerBar)
+	IncorrectTopDownUpperBar = IncorrectTopDown.Render(UpperBar)
+
+	// Parity keyed bars
+	CursorTopLowerBar = [2]string{
+		CursorTopEven.Render(LowerBar),
+		CursorTopOdd.Render(LowerBar),
+	}
+	CursorTopUpperBar = [2]string{
+		CursorTopEven.Render(UpperBar),
+		CursorTopOdd.Render(UpperBar),
+	}
+
+	IncorrectTopLowerBar = [2]string{
+		IncorrectTopEven.Render(LowerBar),
+		IncorrectTopOdd.Render(LowerBar),
+	}
+	IncorrectTopUpperBar = [2]string{
+		IncorrectTopEven.Render(UpperBar),
+		IncorrectTopOdd.Render(UpperBar),
+	}
+
+	AcrossTopLowerBar = [2]string{
+		AcrossTopEven.Render(LowerBar),
+		AcrossTopOdd.Render(LowerBar),
+	}
+	AcrossTopUpperBar = [2]string{
+		AcrossTopEven.Render(UpperBar),
+		AcrossTopOdd.Render(UpperBar),
+	}
+
+	DownTopLowerBar = [2]string{
+		DownTopEven.Render(LowerBar),
+		DownTopOdd.Render(LowerBar),
+	}
+	DownTopUpperBar = [2]string{
+		DownTopEven.Render(UpperBar),
+		DownTopOdd.Render(UpperBar),
+	}
+
+	EmptyBGLowerBar = [2]string{
+		FGEven.Render(LowerBar),
+		FGOdd.Render(LowerBar),
+	}
+	EmptyBGUpperBar = [2]string{
+		FGEven.Render(UpperBar),
+		FGOdd.Render(UpperBar),
+	}
+
+	TopLowerBar = [2]string{
+		TopEven.Render(LowerBar),
+		TopOdd.Render(LowerBar),
+	}
 )

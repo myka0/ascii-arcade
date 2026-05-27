@@ -20,19 +20,21 @@ func (r BlockRenderer) View() string {
 
 	// Render each piece on the board with the appropriate style
 	for y := range r.Board {
-		for x := range r.Board[y] {
-			piece := r.Board[y][x]
+		row := r.Board[y]
+		pieces[y] = make([]string, len(row))
+		for x := range row {
+			piece := row[x]
 
 			// Highlight kings in check
 			if piece.Value == King {
 				if (piece.Color == White && r.IsWhiteKingInCheck) ||
 					(piece.Color == Black && r.IsBlackKingInCheck) {
-					pieces[y] = append(pieces[y], r.viewPiece(piece.Value, CheckPiece))
+					pieces[y][x] = r.viewPiece(piece.Value, CheckPiece)
 					continue
 				}
 			}
 
-			pieces[y] = append(pieces[y], r.viewPiece(piece.Value, pieceStyle(piece.Color)))
+			pieces[y][x] = r.viewPiece(piece.Value, pieceStyle(piece.Color))
 		}
 	}
 
@@ -69,7 +71,7 @@ func (r BlockRenderer) viewBoard(board [][]string) string {
 	rows := make([]string, len(board))
 
 	for y := range board {
-		var row []string
+		row := make([]string, len(board[y]))
 		for x, content := range board[y] {
 			// Determine if cell is even for checkerboard pattern
 			isEven := (x+y)%2 == 0
@@ -77,9 +79,7 @@ func (r BlockRenderer) viewBoard(board [][]string) string {
 
 			// Use a unique zone label for mouse interactivity
 			label := fmt.Sprint(y*len(board) + x)
-			cell := zone.Mark(label, style.Render(content))
-
-			row = append(row, cell)
+			row[x] = zone.Mark(label, style.Render(content))
 		}
 
 		rows[y] = lipgloss.JoinHorizontal(lipgloss.Top, row...)
@@ -90,7 +90,7 @@ func (r BlockRenderer) viewBoard(board [][]string) string {
 
 // viewTakenPieces renders the captured pieces for the given player.
 func (r BlockRenderer) viewTakenPieces(takenPieces []t.Piece) string {
-	cells := make([]string, 16)
+	var cells [16]string
 
 	// Render each piece using appropriate style
 	for i, piece := range takenPieces {
@@ -98,20 +98,20 @@ func (r BlockRenderer) viewTakenPieces(takenPieces []t.Piece) string {
 	}
 
 	// Apply cell styling and separate into two rows based on index parity
-	var top, bot []string
+	var top, bot [8]string
 	for i, content := range cells {
 		cell := EmptyCell.Render(content)
 		if i%2 == 0 {
-			top = append(top, cell)
+			top[i/2] = cell
 		} else {
-			bot = append(bot, cell)
+			bot[i/2] = cell
 		}
 	}
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		lipgloss.JoinHorizontal(lipgloss.Top, top...),
-		lipgloss.JoinHorizontal(lipgloss.Top, bot...),
+		lipgloss.JoinHorizontal(lipgloss.Top, top[:]...),
+		lipgloss.JoinHorizontal(lipgloss.Top, bot[:]...),
 	)
 }
 

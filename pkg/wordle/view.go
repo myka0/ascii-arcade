@@ -2,9 +2,14 @@ package wordle
 
 import (
 	"charm.land/lipgloss/v2"
-	"fmt"
 
 	tea "charm.land/bubbletea/v2"
+)
+
+var (
+	keyboardRow1 = []byte{'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'}
+	keyboardRow2 = []byte{'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'}
+	keyboardRow3 = []byte{'Z', 'X', 'C', 'V', 'B', 'N', 'M'}
 )
 
 // View renders the entire game UI.
@@ -53,7 +58,7 @@ func (m *WordleModel) viewGridRow(y int) string {
 		}
 
 		// Style the cell
-		cellContent := fmt.Sprintf("%c", letter)
+		cellContent := string(rune(letter))
 		cellStyle := m.styleCell(keyStates[i])
 		cells[i] = cellStyle.Render(Border.Render(cellContent))
 	}
@@ -66,9 +71,9 @@ func (m *WordleModel) viewKeyboard() string {
 	return Border.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			m.viewKeyboardRow([]byte{'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'}),
-			m.viewKeyboardRow([]byte{'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'}),
-			m.viewKeyboardRow([]byte{'Z', 'X', 'C', 'V', 'B', 'N', 'M'}),
+			m.viewKeyboardRow(keyboardRow1),
+			m.viewKeyboardRow(keyboardRow2),
+			m.viewKeyboardRow(keyboardRow3),
 		),
 	)
 }
@@ -79,7 +84,7 @@ func (m *WordleModel) viewKeyboardRow(letters []byte) string {
 
 	// Style each key in the keyboard row
 	for i, key := range letters {
-		cell := Border.Render(fmt.Sprintf("%c", key))
+		cell := Border.Render(string(rune(key)))
 		keys[i] = m.styleCell(m.keyboard[key]).Render(cell)
 	}
 
