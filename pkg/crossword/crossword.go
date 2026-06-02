@@ -13,9 +13,18 @@ type Position struct {
 	X, Y int
 }
 
+// Kind identifies which NYT puzzle a CrosswordModel represents.
+type Kind string
+
+const (
+	KindDaily Kind = "daily"
+	KindMini  Kind = "mini"
+)
+
 // CrosswordModel represents the state of a crossword puzzle game.
 type CrosswordModel struct {
 	// Game data
+	kind        Kind
 	date        string
 	acrossClues []string
 	downClues   []string
@@ -45,14 +54,25 @@ type CrosswordModel struct {
 	message      string
 }
 
-// InitCrosswordModel creates and initializes a new crossword model.
-// It loads puzzle data from file and sets up the initial game state.
+// InitCrosswordModel creates and initializes a new daily Crossword model.
 func InitCrosswordModel() *CrosswordModel {
+	return initModel(KindDaily)
+}
+
+// InitMiniModel creates and initializes a new Mini crossword model.
+func InitMiniModel() *CrosswordModel {
+	return initModel(KindMini)
+}
+
+// initModel loads today's puzzle of the given kind and sets up the model.
+func initModel(kind Kind) *CrosswordModel {
 	today := time.Now().Format("2006-01-02")
-	m, err := LoadGame(today)
+	m, err := LoadGame(kind, today)
 	if err != nil {
-		fmt.Println("Failed to load crossword:", err)
+		fmt.Printf("Failed to load %s: %s", kind, err)
 	}
+
+	m.kind = kind
 
 	// Set initial movement direction
 	m.movementAxis = &m.cursor.X
@@ -463,7 +483,7 @@ func (m *CrosswordModel) handleInput(msg tea.KeyPressMsg) {
 
 	// Check for win condition
 	if m.correctCount == m.width*m.height {
-		m.message = "🎉 Congratulations! You solved the crossword! 🎉"
+		m.message = fmt.Sprintf("🎉 Congratulations! You solved the %s! 🎉", m.kind)
 	}
 
 	// Advance cursor if possible

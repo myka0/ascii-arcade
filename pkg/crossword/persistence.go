@@ -49,16 +49,16 @@ type Dimensions struct {
 	Width  int `json:"width"`
 }
 
-// LoadGame returns the Wordle game state for a given date.
-func LoadGame(date string) (CrosswordModel, error) {
+// LoadGame returns the game state for a given kind/date.
+func LoadGame(kind Kind, date string) (CrosswordModel, error) {
 	// Try loading the saved game from the database
-	model, err := LoadFromFile(date)
+	model, err := LoadFromFile(kind, date)
 	if err == nil {
 		return model, nil
 	}
 
 	// Try fetching from the web if not in database
-	model, fetchErr := fetchCrosswordGame(date)
+	model, fetchErr := fetchCrosswordGame(kind, date)
 	if fetchErr != nil {
 		return model, fetchErr
 	}
@@ -66,9 +66,10 @@ func LoadGame(date string) (CrosswordModel, error) {
 	return model, nil
 }
 
-func fetchCrosswordGame(date string) (CrosswordModel, error) {
+// fetchCrosswordGame fetches the Crossword game data for today from the NYT API.
+func fetchCrosswordGame(kind Kind, date string) (CrosswordModel, error) {
 	var model CrosswordModel
-	url := fmt.Sprintf("https://www.nytimes.com/svc/crosswords/v6/puzzle/daily/%s.json", date)
+	url := fmt.Sprintf("https://www.nytimes.com/svc/crosswords/v6/puzzle/%s/%s.json", kind, date)
 
 	// Make the GET request
 	req, err := http.NewRequest("GET", url, nil)
@@ -159,6 +160,7 @@ func fetchCrosswordGame(date string) (CrosswordModel, error) {
 		}
 	}
 
+	model.kind = kind
 	model.date = date
 	model.acrossClues = acrossClues
 	model.downClues = downClues
@@ -196,9 +198,10 @@ func (m *CrosswordModel) SaveToFile() error {
 	// Insert the data into the database
 	insertQuery := `
 		INSERT OR REPLACE INTO crosswords(
-			date, across, down, answer, grid, grid_nums, clue_indices, width, height
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			kind, date, across, down, answer, grid, grid_nums, clue_indices, width, height
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = db.Exec(insertQuery,
+		string(m.kind),
 		m.date,
 		acrossJSON,
 		downJSON,
@@ -214,7 +217,7 @@ func (m *CrosswordModel) SaveToFile() error {
 }
 
 // LoadFromFile loads a crossword puzzle state from the SQLite database.
-func LoadFromFile(date string) (CrosswordModel, error) {
+func LoadFromFile(kind Kind, date string) (CrosswordModel, error) {
 	var model CrosswordModel
 
 	db, err := getDB()
@@ -225,7 +228,7 @@ func LoadFromFile(date string) (CrosswordModel, error) {
 	query := `
 		SELECT across, down, answer, grid, grid_nums, clue_indices, width, height
 		FROM crosswords
-		WHERE date = ?
+		WHERE kind = ? AND date = ?
 	`
 
 	var acrossJSON, downJSON []byte
@@ -234,7 +237,7 @@ func LoadFromFile(date string) (CrosswordModel, error) {
 	var widthJSON, heightJSON []byte
 
 	// Query row from database
-	err = db.QueryRow(query, date).Scan(
+	err = db.QueryRow(query, string(kind), date).Scan(
 		&acrossJSON, &downJSON,
 		&answerJSON, &gridJSON,
 		&gridNumsJSON, &clueIndicesJSON,
@@ -261,6 +264,7 @@ func LoadFromFile(date string) (CrosswordModel, error) {
 	json.Unmarshal(heightJSON, &height)
 
 	// Set up the model with data from the saved game
+	model.kind = kind
 	model.date = date
 	model.acrossClues = across
 	model.downClues = down
@@ -282,6 +286,9 @@ func LoadFromFile(date string) (CrosswordModel, error) {
 // prepareGrid initializes the crossword model's grid state,
 // tracking solved clues, black squares, and progress metrics.
 func (m *CrosswordModel) prepareGrid() {
+	foundCursorCell := false
+
+	// Initialize incorrect grid
 	m.incorrect = make([][]bool, m.height)
 	for i := range m.incorrect {
 		m.incorrect[i] = make([]bool, m.width)
@@ -290,6 +297,11 @@ func (m *CrosswordModel) prepareGrid() {
 	// Iterate through the grid row by row
 	for row := range m.height {
 		for col := range m.width {
+			// Find the first non-black cell to set the initial cursor position
+			if !foundCursorCell && m.answer[row][col] != '.' {
+				m.cursor = Position{X: col, Y: row}
+				foundCursorCell = true
+			}
 
 			// If the answer is a black cell, mark the grid cell as black too
 			if m.answer[row][col] == '.' {
@@ -358,7 +370,8 @@ func getDB() (*sql.DB, error) {
 
 		if _, err := db.Exec(`
 			CREATE TABLE IF NOT EXISTS crosswords (
-				date TEXT PRIMARY KEY,
+				kind TEXT NOT NULL DEFAULT 'daily',
+				date TEXT NOT NULL,
 				across TEXT,
 				down TEXT,
 				answer TEXT,
@@ -366,7 +379,8 @@ func getDB() (*sql.DB, error) {
 				grid_nums TEXT,
 				clue_indices TEXT,
 				width INT,
-				height INT
+				height INT,
+				PRIMARY KEY (kind, date)
 			)
 		`); err != nil {
 			db.Close()

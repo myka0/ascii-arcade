@@ -39,6 +39,7 @@ var Games = []GamesList{
 		Header: "New York Times",
 		Games: []string{
 			"Crossword",
+			"Mini",
 			"Wordle",
 			"Connections",
 			"Sudoku",
@@ -246,6 +247,8 @@ func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
 		m.activeModel = nil
 	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
+	case "Mini":
+		m.activeModel = crossword.InitMiniModel()
 	case "Wordle":
 		m.activeModel = wordle.InitWordleModel()
 	case "Connections":

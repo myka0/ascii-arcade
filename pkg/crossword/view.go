@@ -7,6 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // View renders the complete crossword puzzle UI.
@@ -32,13 +33,32 @@ func (m *CrosswordModel) View() tea.View {
 	// Last row is the bottom margin
 	rows[m.height] = m.viewBottomMargin(m.height - 1)
 
+	// Render the crossword grid
+	gridView := lipgloss.JoinVertical(lipgloss.Center, rows...)
+
+	// Choose the clues layout based on puzzle kind
+	var puzzleView string
+	if m.kind == KindDaily {
+		puzzleView = lipgloss.JoinVertical(
+			lipgloss.Center,
+			gridView,
+			"",
+			m.viewCluesBox(),
+		)
+	} else {
+		puzzleView = lipgloss.JoinHorizontal(
+			lipgloss.Center,
+			gridView,
+			m.viewMiniCluesBox(),
+		)
+	}
+
 	// Combine all elements vertically
 	return tea.NewView(
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			lipgloss.JoinVertical(lipgloss.Center, rows[:]...),
-			m.viewCluesBox(),
-			m.message,
+			puzzleView,
+			MessageStyle.Render(m.message),
 		),
 	)
 }
@@ -46,43 +66,34 @@ func (m *CrosswordModel) View() tea.View {
 // viewCluesBox renders the box containing across and down clues.
 // It displays the current clue in the middle with surrounding clues above and below.
 func (m *CrosswordModel) viewCluesBox() string {
-	var clues [13]string
-
 	// Get the across clue index for the current cursor position
 	clueStartIdx := m.clueIndices[m.cursor.Y][m.cursor.X].X
-	viewClues(m.acrossClues, clues[:], m.isAcrossSolved, clueStartIdx, true)
-
-	// Add a vertical separator between across and down clues
-	border := FGBorder.Render("│")
-	for i := range 13 {
-		clues[i] += " " + border + " "
-	}
+	acrossLines := append(
+		[]string{AcrossClue.Align(lipgloss.Center).Render("Across")},
+		viewClues(m.acrossClues, m.isAcrossSolved, clueStartIdx, AcrossClue)...,
+	)
+	acrossClues := lipgloss.JoinVertical(lipgloss.Left, acrossLines...)
 
 	// Get the down clue index for the current cursor position
-	clueStartIdx = m.clueIndices[m.cursor.Y][m.cursor.X].Y
-	if clueStartIdx <= -1 {
-		clueStartIdx = 0
-	}
+	clueStartIdx = max(m.clueIndices[m.cursor.Y][m.cursor.X].Y, 0)
 
-	viewClues(m.downClues, clues[:], m.isDownSolved, clueStartIdx, false)
+	downLines := append(
+		[]string{DownClue.Align(lipgloss.Center).Render("Down")},
+		viewClues(m.downClues, m.isDownSolved, clueStartIdx, DownClue)...,
+	)
+	downClues := lipgloss.JoinVertical(lipgloss.Left, downLines...)
 
-	// Create the header for the clues box
-	acrossStyle := AcrossClue.Align(lipgloss.Center)
-	downStyle := DownClue.Align(lipgloss.Center)
-	top := acrossStyle.Render("Across") + "   " +
-		downStyle.Render("Down") + "\n"
-
-	return BorderStyle.Render(top + lipgloss.JoinVertical(lipgloss.Center, clues[:]...))
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		lipgloss.NewStyle().MarginRight(3).Render(acrossClues),
+		downClues,
+	)
 }
 
 // viewClues renders a set of clues into the provided slice.
 // It places the current clue in the middle and surrounding clues above and below.
-func viewClues(clues, viewClues []string, isSolved []bool, startIdx int, isAcross bool) {
-	// Select the appropriate style based on clue direction
-	currentClueStyle := AcrossClue
-	if !isAcross {
-		currentClueStyle = DownClue
-	}
+func viewClues(clues []string, isSolved []bool, startIdx int, activeStyle lipgloss.Style) []string {
+	rows := make([]string, CluesVisibleRows)
 
 	// Wrap the current clue
 	lines := splitClue(clues[startIdx])
@@ -90,35 +101,37 @@ func viewClues(clues, viewClues []string, isSolved []bool, startIdx int, isAcros
 
 	// Where to place the first line of the current clue so it’s visually centered:
 	topOffset, bottomOffset := n/2, (n-1)/2
-	startRow := 6 - topOffset
+	startRow := CluesCenterRow - topOffset
 
 	// Render current clue lines
 	for i, line := range lines {
-		viewClues[startRow+i] += currentClueStyle.Render(line)
+		rows[startRow+i] = activeStyle.Render(line)
 	}
 
 	// Add clues that come before the current clue
-	topSlots := 6 - topOffset
+	topSlots := CluesCenterRow - topOffset
 	cluesBefore := viewSurroundingClues(clues, isSolved, startIdx, -1, topSlots)
 	for i, clue := range cluesBefore {
-		viewClues[startRow-1-i] += clue
+		rows[startRow-1-i] = clue
 	}
 
 	// Add clues that come after the current clue
-	bottomSlots := 6 - bottomOffset
+	bottomSlots := CluesCenterRow - bottomOffset
 	cluesAfter := viewSurroundingClues(clues, isSolved, startIdx, +1, bottomSlots)
 	for i, clue := range cluesAfter {
-		viewClues[startRow+n+i] += clue
+		rows[startRow+n+i] = clue
 	}
+
+	return rows
 }
 
 // viewSurroundingClues returns up to maxLines of rendered clue lines in the given direction
 // relative to startIdx. For direction -1 (above) the lines are ordered nearest-first topward.
 // For +1 (below) it’s nearest-first downward.
 func viewSurroundingClues(clues []string, isSolved []bool, startIdx, direction, maxLines int) []string {
-	viewClues := make([]string, 0, maxLines)
+	lines := make([]string, 0, maxLines)
 
-	for step := 1; len(viewClues) < maxLines; step++ {
+	for step := 1; len(lines) < maxLines; step++ {
 		// Calculate the index with wrapping
 		wrappedIdx := (startIdx + direction*step + len(clues)) % len(clues)
 
@@ -128,25 +141,70 @@ func viewSurroundingClues(clues []string, isSolved []bool, startIdx, direction, 
 			style = SolvedClue
 		}
 
-		lines := splitClue(clues[wrappedIdx])
+		clueLines := splitClue(clues[wrappedIdx])
 
 		if direction == -1 {
 			// For clues above, reverse and prepend
-			for i := len(lines) - 1; i >= 0 && len(viewClues) < maxLines; i-- {
-				viewClues = append(viewClues, style.Render(lines[i]))
+			for i := len(clueLines) - 1; i >= 0 && len(lines) < maxLines; i-- {
+				lines = append(lines, style.Render(clueLines[i]))
 			}
 		} else {
 			// For clues below, append in order
-			for i := 0; i < len(lines) && len(viewClues) < maxLines; i++ {
-				viewClues = append(viewClues, style.Render(lines[i]))
+			for i := 0; i < len(clueLines) && len(lines) < maxLines; i++ {
+				lines = append(lines, style.Render(clueLines[i]))
 			}
 		}
 	}
 
-	return viewClues
+	return lines
 }
 
-// splitClue wraps a clue into lines of at most ClueWidth characters.
+// viewMiniCluesBox renders Mini puzzle clues in a single vertical column.
+func (m *CrosswordModel) viewMiniCluesBox() string {
+	clueIndex := m.clueIndices[m.cursor.Y][m.cursor.X]
+
+	acrossLines := viewMiniColumn(m.acrossClues, m.isAcrossSolved, clueIndex.X, AcrossClue)
+	downLines := viewMiniColumn(m.downClues, m.isDownSolved, clueIndex.Y, DownClue)
+
+	// Preallocate enough capacity
+	lines := make([]string, 0, len(acrossLines)+len(downLines)+3)
+
+	headerStyle := NormalClue.Align(lipgloss.Center)
+
+	lines = append(lines, headerStyle.Render("Across"))
+	lines = append(lines, acrossLines...)
+	lines = append(lines, "")
+	lines = append(lines, headerStyle.Render("Down"))
+	lines = append(lines, downLines...)
+
+	return lipgloss.NewStyle().
+		MarginLeft(4).
+		Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+// viewMiniColumn returns a rendered lines for one side of the Mini clues.
+func viewMiniColumn(clues []string, solved []bool, activeIdx int, activeStyle lipgloss.Style) []string {
+	lines := make([]string, 0, len(clues))
+
+	for i, clue := range clues {
+		// Style the clue
+		style := NormalClue
+		if i == activeIdx {
+			style = activeStyle
+		} else if i < len(solved) && solved[i] {
+			style = SolvedClue
+		}
+
+		// Wrap the clue and render it
+		for _, line := range splitClue(clue) {
+			lines = append(lines, style.Render(line))
+		}
+	}
+
+	return lines
+}
+
+// splitClue wraps a clue into lines of at most ClueWidth display cells.
 func splitClue(clue string) []string {
 	var lines []string
 	remaining := clue
@@ -159,16 +217,17 @@ func splitClue(clue string) []string {
 			remaining = indent + remaining
 		}
 
-		// If the remaining clue is less than the maximum width, add it entirely and break
-		if len(remaining) < ClueWidth {
+		// If what's left fits in the box, emit it and stop
+		if ansi.StringWidth(remaining) <= ClueWidth {
 			lines = append(lines, remaining)
 			break
 		}
 
 		// Otherwise, find the last space in the remaining clue and split there
 		splitIdx := strings.LastIndex(remaining[:ClueWidth], " ")
-		lines = append(lines, remaining[:splitIdx])
-		remaining = remaining[splitIdx+1:]
+		head, tail := remaining[:splitIdx], remaining[splitIdx+1:]
+		lines = append(lines, head)
+		remaining = tail
 	}
 
 	return lines

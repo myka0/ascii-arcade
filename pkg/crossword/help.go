@@ -3,6 +3,7 @@ package crossword
 import (
 	"ascii-arcade/internal/colors"
 	"ascii-arcade/internal/components"
+	"strings"
 
 	"charm.land/lipgloss/v2"
 )
@@ -15,6 +16,15 @@ var (
 ██║     ██╔══██╗██║   ██║╚════██║╚════██║██║███╗██║██║   ██║██╔══██╗██║  ██║
 ╚██████╗██║  ██║╚██████╔╝███████║███████║╚███╔███╔╝╚██████╔╝██║  ██║██████╔╝
  ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝ ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝ `,
+	)
+
+	MiniHeader = lipgloss.NewStyle().Foreground(colors.Purple).Render(
+		`███╗   ███╗██╗███╗   ██╗██╗
+████╗ ████║██║████╗  ██║██║
+██╔████╔██║██║██╔██╗ ██║██║
+██║╚██╔╝██║██║██║╚██╗██║██║
+██║ ╚═╝ ██║██║██║ ╚████║██║
+╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝`,
 	)
 
 	Intro = `Solve the daily Crossword by filling in all the blank
@@ -31,7 +41,13 @@ squares with words that match the clues.
 
 // Help returns the Crossword help screen UI
 func (m *CrosswordModel) Help() string {
-	howToPlay := components.Section("How To Play", Intro)
+	header, intro := Header, Intro
+	if m.kind == KindMini {
+		header = MiniHeader
+		intro = strings.Replace(intro, "Crossword", "Mini crossword", -1)
+	}
+
+	howToPlay := components.Section("How To Play", intro)
 
 	// Combine all help menu sections vertically
 	menu := lipgloss.JoinVertical(
@@ -75,5 +91,5 @@ func (m *CrosswordModel) Help() string {
 		components.GameKeybinds(gameKeybinds),
 	)
 
-	return components.CreateHelpMenu(Header, menu, keybinds)
+	return components.CreateHelpMenu(header, menu, keybinds)
 }

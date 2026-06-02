@@ -7,6 +7,9 @@ import (
 )
 
 const (
+	CluesVisibleRows = 13
+	CluesCenterRow   = CluesVisibleRows / 2 // 6
+
 	Padding       = 2
 	ClueWidth     = 40
 	FullClueWidth = ClueWidth + Padding
@@ -43,6 +46,11 @@ var (
 			Padding(0, 1).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(Border)
+
+	MessageStyle = lipgloss.NewStyle().
+			Foreground(LightText).
+			MarginTop(1).
+			Bold(true)
 
 	// General Cells
 	CursorCell = lipgloss.NewStyle().
