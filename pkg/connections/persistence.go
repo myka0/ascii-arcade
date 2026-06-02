@@ -58,6 +58,7 @@ func LoadGame(date string) (ConnectionsModel, error) {
 	return model, nil
 }
 
+// fetchConnectionsGroups fetches the Connections groups for today from the NYT API.
 func fetchConnectionsGroups(date string) ([4]WordGroup, error) {
 	url := fmt.Sprintf("https://www.nytimes.com/svc/connections/v2/%s.json", date)
 	var groups [4]WordGroup
