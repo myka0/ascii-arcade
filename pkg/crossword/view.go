@@ -266,7 +266,7 @@ func (m *CrosswordModel) viewTopMargin() string {
 
 // viewBottomMargin renders the bottom margin of a row in the grid.
 func (m *CrosswordModel) viewBottomMargin(y int) string {
-	top := make([]string, m.width)
+	bottom := make([]string, m.width)
 	for x, char := range m.grid[y] {
 		isEven := (x+y)%2 == 0
 		isIncorrect := m.incorrect[y][x]
@@ -278,21 +278,21 @@ func (m *CrosswordModel) viewBottomMargin(y int) string {
 		// Apply appropriate styling based on cell state
 		switch {
 		case isCursor:
-			top[x] = CursorUpperBar
+			bottom[x] = CursorUpperBar
 		case isIncorrect:
-			top[x] = IncorrectUpperBar
+			bottom[x] = IncorrectUpperBar
 		case isAcross:
-			top[x] = AcrossUpperBar
+			bottom[x] = AcrossUpperBar
 		case isDown:
-			top[x] = DownUpperBar
+			bottom[x] = DownUpperBar
 		case isEmpty:
-			top[x] = Blank
+			bottom[x] = Blank
 		default:
-			top[x] = switchStyledBar(isEven, EmptyBGUpperBar)
+			bottom[x] = switchStyledBar(isEven, EmptyBGUpperBar)
 		}
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, top[:]...)
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, bottom[:]...)
 }
 
 // viewGridRow renders a row of cells in the crossword grid.
