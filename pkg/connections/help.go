@@ -53,7 +53,7 @@ func (m *ConnectionsModel) Help() string {
 	// Define keybindings specific to the game
 	keybinds := []components.Keybind{
 		{Key: "ctrl+s", Action: "shuffle"},
-		{Key: "crtl+d", Action: "deselect"},
+		{Key: "ctrl+d", Action: "deselect"},
 		{Key: "ctrl+r", Action: "reset"},
 		{Key: "enter", Action: "submit"},
 		{Key: "click", Action: "select"},
