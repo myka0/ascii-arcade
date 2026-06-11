@@ -79,8 +79,12 @@ func (m model) View() tea.View {
 			lipgloss.Place(m.windowWidth, m.windowHeight, lipgloss.Center, lipgloss.Center, view),
 		),
 	)
+
 	v.AltScreen = true
-	v.MouseMode = tea.MouseModeCellMotion
+	if !m.noMouse {
+		v.MouseMode = tea.MouseModeCellMotion
+	}
+
 	return v
 }
 

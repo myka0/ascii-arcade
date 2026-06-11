@@ -79,17 +79,20 @@ type model struct {
 	games           []string
 	searchQuery     string
 	message         string
+	noMouse         bool
 }
 
 // Creates the initial model with connections as default.
-func initialModel(startGame string) model {
+func initialModel(startGame string, noMouse bool) model {
 	m := model{}
+	m.noMouse = noMouse
 	m.games = handleSearch("")
 
 	// If a start game is specified, initialize it
 	if startGame != "" {
 		m.selectedGame = strings.ToUpper(startGame[0:1]) + strings.ToLower(startGame[1:])
-		m.handleSwitchModel()
+		updated, _ := m.handleSwitchModel()
+		m = updated.(model)
 	}
 
 	return m
@@ -267,13 +270,13 @@ func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
 		m.activeModel = nil
 	}
 
-	m.isGameSelected = true
-	m.isHelpSelected = true
-
 	if m.activeModel == nil {
 		m.message = "Selected game not implemented yet."
 		return m, nil
 	}
+
+	m.isGameSelected = true
+	m.isHelpSelected = true
 
 	return m, m.activeModel.Init()
 }
@@ -321,11 +324,12 @@ func handleSearch(query string) []string {
 // Entry point of the application.
 func main() {
 	startGame := flag.String("game", "", "Start with a specific game")
+	noMouse := flag.Bool("no-mouse", false, "Disable mouse support")
 	flag.Parse()
 
 	zone.NewGlobal()
 
-	p := tea.NewProgram(initialModel(*startGame))
+	p := tea.NewProgram(initialModel(*startGame, *noMouse))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
