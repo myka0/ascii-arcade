@@ -12,7 +12,7 @@ var implementedGames = map[string]bool{
 	"Tetris":       true,
 	"Snake":        false,
 	"Solitaire":    true,
-	"Minesweeper":  false,
+	"Minesweeper":  true,
 	"Crossword":    true,
 	"Mini":         true,
 	"Wordle":       true,

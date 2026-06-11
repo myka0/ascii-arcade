@@ -6,6 +6,7 @@ import (
 	"ascii-arcade/pkg/connections"
 	"ascii-arcade/pkg/crossword"
 	"ascii-arcade/pkg/gogame"
+	"ascii-arcade/pkg/minesweeper"
 	"ascii-arcade/pkg/solitaire"
 	"ascii-arcade/pkg/tetris"
 	"ascii-arcade/pkg/wordle"
@@ -247,7 +248,7 @@ func (m model) handleSwitchModel() (tea.Model, tea.Cmd) {
 	case "Solitaire":
 		m.activeModel = solitaire.InitSolitaireModel()
 	case "Minesweeper":
-		m.activeModel = nil
+		m.activeModel = minesweeper.InitMinesweeperModel()
 	case "Crossword":
 		m.activeModel = crossword.InitCrosswordModel()
 	case "Mini":
