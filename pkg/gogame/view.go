@@ -14,10 +14,35 @@ import (
 
 // View renders the entire Go board UI.
 func (m *GoModel) View() tea.View {
-	if m.gameOver && !m.markingDeadStones {
+	if !m.hasSelected {
+		return tea.NewView(m.viewSelection())
+	} else if m.gameOver && !m.markingDeadStones {
 		return tea.NewView(m.viewGameOver())
 	}
 	return tea.NewView(m.viewBoard())
+}
+
+// viewSelection renders the board size selection menu.
+func (m *GoModel) viewSelection() string {
+	entries := make([]string, len(BoardSizes))
+	for i, d := range BoardSizes {
+		entry := fmt.Sprintf("%d × %d", d, d)
+		if m.cursor.Y == i {
+			entries[i] = SelectedListEntry.Render("> " + entry)
+		} else {
+			entries[i] = ListEntry.Render(entry)
+		}
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			TitleStyle.MarginTop(0).Render("Go"),
+			" — ",
+			TextNormal.Render(m.message),
+		),
+		lipgloss.JoinVertical(lipgloss.Left, entries...),
+	)
 }
 
 // viewBoard assembles the full board UI.

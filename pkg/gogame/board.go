@@ -9,8 +9,13 @@ const (
 	BoardSize9  = 9
 	BoardSize13 = 13
 	BoardSize19 = 19
-	DefaultSize = BoardSize9
 )
+
+var BoardSizes = []int{
+	BoardSize9,
+	BoardSize13,
+	BoardSize19,
+}
 
 // Stone colors
 const (

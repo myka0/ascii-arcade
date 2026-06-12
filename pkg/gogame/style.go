@@ -32,6 +32,12 @@ var (
 
 	MessageStyle = lipgloss.NewStyle().Foreground(colors.Pink).MarginTop(1)
 
+	TextNormal = lipgloss.NewStyle().Foreground(colors.Light2)
+
+	ListEntry = lipgloss.NewStyle().Foreground(colors.Light2).MarginLeft(2)
+
+	SelectedListEntry = lipgloss.NewStyle().Foreground(colors.Pink)
+
 	Border       = lipgloss.NewStyle().Padding(1, 4, 2, 4).Background(colors.Tan)
 	BorderLabels = lipgloss.NewStyle().Padding(1, 4, 1, 2).Background(colors.Tan)
 

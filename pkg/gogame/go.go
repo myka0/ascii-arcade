@@ -26,6 +26,7 @@ type GoModel struct {
 	blackPassed bool
 	whitePassed bool
 	showLabels  bool
+	hasSelected bool
 
 	markingDeadStones bool
 	deadStones        map[Position]bool
@@ -33,13 +34,20 @@ type GoModel struct {
 
 // InitGoModel creates and initializes a new Go game model.
 func InitGoModel() *GoModel {
-	size := DefaultSize
+	return &GoModel{
+		message: "Select board size",
+	}
+}
+
+// createGame initializes a new game with the given board size.
+func createGame(size int) *GoModel {
 	m := &GoModel{
 		board:        NewBoard(size),
 		boardSize:    size,
 		lastMove:     nil,
 		turn:         Black,
 		showLabels:   true,
+		hasSelected:  true,
 		cursor:       Position{X: size / 2, Y: size / 2},
 		boardHistory: make(map[string]struct{}),
 		deadStones:   make(map[Position]bool),
@@ -71,9 +79,16 @@ func (m *GoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *GoModel) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 
-	// Always allow ctrl+r to reset
-	if key == "ctrl+r" {
+	// Always allow resetting and changing game
+	switch key {
+	case "ctrl+r":
 		return handleReset(m.boardSize), nil
+	case "1":
+		return handleReset(BoardSize9), nil
+	case "2":
+		return handleReset(BoardSize13), nil
+	case "3":
+		return handleReset(BoardSize19), nil
 	}
 
 	// Allow enter to confirm score when marking dead stones
@@ -83,6 +98,19 @@ func (m *GoModel) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	// Disable all other keypresses on game over screen
 	if m.gameOver {
+		return m, nil
+	}
+
+	// Difficulty selection menu
+	if !m.hasSelected {
+		switch key {
+		case "up", "w":
+			m.cursor.Y = (m.cursor.Y - 1 + len(BoardSizes)) % len(BoardSizes)
+		case "down", "s":
+			m.cursor.Y = (m.cursor.Y + 1) % len(BoardSizes)
+		case "enter":
+			return createGame(BoardSizes[m.cursor.Y]), nil
+		}
 		return m, nil
 	}
 
@@ -109,8 +137,6 @@ func (m *GoModel) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.handlePass()
 	case "r":
 		return m.handleResign()
-	case "ctrl+v":
-		m.cycleBoardSize()
 	case "l":
 		m.showLabels = !m.showLabels
 	}
@@ -381,18 +407,6 @@ func handleReset(boardSize int) *GoModel {
 	newModel.boardHistory[fmt.Sprint(newModel.board.Cells)] = struct{}{}
 	newModel.cursor = Position{X: boardSize / 2, Y: boardSize / 2}
 	return newModel
-}
-
-// cycleBoardSize cycles through 9x9, 13x13, and 19x19 board sizes.
-func (m *GoModel) cycleBoardSize() {
-	switch m.boardSize {
-	case BoardSize9:
-		*m = *handleReset(BoardSize13)
-	case BoardSize13:
-		*m = *handleReset(BoardSize19)
-	case BoardSize19:
-		*m = *handleReset(BoardSize9)
-	}
 }
 
 // colorName returns the name of a color constant.
