@@ -126,9 +126,10 @@ func GameKeybinds(keybinds []Keybind) string {
 // GlobalKeybinds returns a rendered section with global application shortcuts.
 func GlobalKeybinds() string {
 	keybinds := []Keybind{
+		{Key: "?     ", Action: "help"},
+		{Key: "ctrl+r", Action: "reset"},
 		{Key: "ctrl+h", Action: "home"},
 		{Key: "ctrl+c", Action: "quit"},
-		{Key: "?", Action: "help"},
 	}
 
 	return ViewKeybinds("Global Keybinds", keybinds)

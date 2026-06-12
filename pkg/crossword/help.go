@@ -59,7 +59,6 @@ func (m *CrosswordModel) Help() string {
 	gameKeybinds := []components.Keybind{
 		{Key: "<char>", Action: "input"},
 		{Key: "bksp", Action: "erase"},
-		{Key: "ctrl+r", Action: "reset"},
 	}
 
 	// Define movement keybindings

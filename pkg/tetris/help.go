@@ -52,7 +52,6 @@ func (m *TetrisModel) Help() string {
 		{Key: "x", Action: "rotate cw"},
 		{Key: "c", Action: "hold"},
 		{Key: "p / esc", Action: "pause"},
-		{Key: "ctrl+r", Action: "reset"},
 	}
 
 	keybinds := lipgloss.JoinVertical(

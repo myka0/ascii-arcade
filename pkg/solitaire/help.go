@@ -54,7 +54,6 @@ func (m *SolitaireModel) Help() string {
 	keybinds := []components.Keybind{
 		{Key: "click", Action: "select"},
 		{Key: "r-click", Action: "undo"},
-		{Key: "ctrl+r", Action: "reset"},
 		{Key: "space", Action: "draw"},
 		{Key: "w", Action: "waste"},
 		{Key: "u", Action: "undo"},

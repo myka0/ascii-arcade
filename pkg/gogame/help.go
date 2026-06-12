@@ -51,8 +51,7 @@ func (m *GoModel) Help() string {
 	shortcutKeybinds := []components.Keybind{
 		{Key: "space / enter", Action: "place stone"},
 		{Key: "click", Action: "place stone"},
-		{Key: "ctrl+v", Action: "board size"},
-		{Key: "ctrl+r", Action: "reset"},
+		{Key: "1 / 2 / 3", Action: "board size"},
 	}
 
 	gameKeybinds := []components.Keybind{

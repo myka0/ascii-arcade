@@ -60,13 +60,17 @@ func (m *CheckersModel) Help() string {
 	)
 
 	// Define keybindings specific to the game
-	keybinds := []components.Keybind{
-		{Key: "ctrl+r", Action: "reset"},
-		{Key: "ctrl+v", Action: "renderer"},
+	gameKeybinds := []components.Keybind{
 		{Key: "click", Action: "select"},
+		{Key: "1 / 2 / 3", Action: "change renderer"},
 	}
 
-	return components.CreateHelpMenu(Header, menu, components.GameKeybinds(keybinds))
+	keybinds := components.JoinKeybinds(
+		components.ViewWideKeybinds("Game", gameKeybinds),
+		components.GlobalKeybinds(),
+	)
+
+	return components.CreateHelpMenu(Header, menu, keybinds)
 }
 
 // createRendererExamples returns the renderer examples section for the Chess help screen.
@@ -106,7 +110,7 @@ func createRendererExamples() string {
 		lipgloss.Left,
 		Rendering,
 		pieces,
-		"The stlye can be changed by pressing ctrl+v.",
+		"The stlye can be changed by pressing 1 / 2 / 3.",
 	)
 
 	return components.Section("Rendering Styles", content)

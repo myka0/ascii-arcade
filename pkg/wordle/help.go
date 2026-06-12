@@ -43,7 +43,6 @@ func (m *WordleModel) Help() string {
 		{Key: "<char>", Action: "input"},
 		{Key: "bksp", Action: "erase"},
 		{Key: "enter", Action: "submit"},
-		{Key: "ctrl+r", Action: "reset"},
 	}
 
 	return components.CreateHelpMenu(Header, menu, components.GameKeybinds(keybinds))

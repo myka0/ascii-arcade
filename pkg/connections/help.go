@@ -54,7 +54,6 @@ func (m *ConnectionsModel) Help() string {
 	keybinds := []components.Keybind{
 		{Key: "ctrl+s", Action: "shuffle"},
 		{Key: "ctrl+d", Action: "deselect"},
-		{Key: "ctrl+r", Action: "reset"},
 		{Key: "enter", Action: "submit"},
 		{Key: "click", Action: "select"},
 	}
